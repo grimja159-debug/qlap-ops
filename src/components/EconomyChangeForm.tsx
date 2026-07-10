@@ -1,34 +1,38 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { economyApi } from '../services/economyApi';
-import { CURRENCY_TYPES, CURRENCY_LABELS } from '../lib/constants';
-import type { CurrencyType, EconomyDirection, EconomyChangeResult } from '../types/economy';
+import type { CurrencyType, EconomyDirection, EconomyChangeRequest, EconomyChangeResult } from '../types/economy';
 import { TextField, NumberField, SelectField } from './Field';
 import { InlineMessage } from './InlineMessage';
+import { ConfirmButton } from './ConfirmButton';
+import { StatusBadge } from './StatusBadge';
 import { errorToMessage } from '../lib/apiError';
 import { formatNumber } from '../lib/format';
 
-/**
- * 재화(QL 코인 / GM 티켓) 지급·차감 공용 폼.
- *
- * [재사용] 재화 관리 페이지와 유저 상세 모달이 동일 폼을 쓴다.
- *  - presetUid + lockUid: 유저 상세에서는 대상 UID 가 고정된다.
- *  - 성공 시 user/users/logs 쿼리를 무효화해 잔액·로그가 즉시 갱신되게 한다.
- *
- * amount 는 항상 양수, 방향(direction)으로 지급/차감을 구분한다(서비스가 라우트로 매핑).
- */
 interface EconomyChangeFormProps {
   presetUid?: string;
   lockUid?: boolean;
   onChanged?: (result: EconomyChangeResult) => void;
 }
 
-const DIRECTION_OPTIONS = [
-  { value: 'grant', label: '지급 (+)' },
-  { value: 'revoke', label: '차감 (−)' },
-] as const;
+const CURRENCY_OPTIONS: Array<{ value: CurrencyType; label: string }> = [
+  { value: 'qlcoin', label: 'QL 코인' },
+];
 
-const CURRENCY_OPTIONS = CURRENCY_TYPES.map((c) => ({ value: c, label: CURRENCY_LABELS[c] }));
+const DIRECTION_OPTIONS: Array<{ value: EconomyDirection; label: string }> = [
+  { value: 'grant', label: '지급 (+)' },
+  { value: 'revoke', label: '차감 (-)' },
+];
+
+const MAX_MANUAL_AMOUNT = 1_000_000;
+
+function currencyLabel(currency: CurrencyType): string {
+  return currency === 'qlcoin' ? 'QL 코인' : currency;
+}
+
+function directionLabel(direction: EconomyDirection): string {
+  return direction === 'grant' ? '지급' : '차감';
+}
 
 export function EconomyChangeForm({ presetUid, lockUid, onChanged }: EconomyChangeFormProps) {
   const qc = useQueryClient();
@@ -38,12 +42,22 @@ export function EconomyChangeForm({ presetUid, lockUid, onChanged }: EconomyChan
   const [amount, setAmount] = useState<number>(NaN);
   const [reason, setReason] = useState('');
 
+  const normalizedUid = uid.trim();
+  const normalizedReason = reason.trim();
+  const validationMessage = useMemo(() => {
+    if (!normalizedUid) return 'UID를 입력하세요.';
+    if (!Number.isFinite(amount) || amount < 1) return '수량은 1 이상이어야 합니다.';
+    if (amount > MAX_MANUAL_AMOUNT) return `수량은 1회 최대 ${formatNumber(MAX_MANUAL_AMOUNT)}까지 허용합니다.`;
+    if (normalizedReason.length < 2) return '사유는 2자 이상 입력하세요.';
+    if (normalizedReason.length > 300) return '사유는 300자 이하로 입력하세요.';
+    return null;
+  }, [amount, normalizedReason, normalizedUid]);
+
   const mutation = useMutation({
-    mutationFn: economyApi.change,
-    onSuccess: (result) => {
-      // 잔액과 로그가 화면 곳곳에 흩어져 있으므로 관련 쿼리를 폭넓게 무효화한다.
+    mutationFn: (request: EconomyChangeRequest) => economyApi.change(request),
+    onSuccess: (result, variables) => {
       void qc.invalidateQueries({ queryKey: ['admin-users'] });
-      void qc.invalidateQueries({ queryKey: ['user', uid] });
+      void qc.invalidateQueries({ queryKey: ['user', variables.uid] });
       void qc.invalidateQueries({ queryKey: ['logs'] });
       setAmount(NaN);
       setReason('');
@@ -51,59 +65,74 @@ export function EconomyChangeForm({ presetUid, lockUid, onChanged }: EconomyChan
     },
   });
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uid || !Number.isFinite(amount) || amount < 1 || reason.trim().length < 1) return;
-    mutation.mutate({ uid, currency, direction, amount, reason: reason.trim() });
+  const submit = () => {
+    if (validationMessage) return;
+    mutation.mutate({
+      uid: normalizedUid,
+      currency,
+      direction,
+      amount: Math.floor(amount),
+      reason: normalizedReason,
+    });
   };
 
-  const newBalance =
-    mutation.data && currency === 'qlcoin'
-      ? mutation.data.user.qlCoinBalance
-      : mutation.data?.user.gmTiketBalance;
+  const newBalance = mutation.data?.user.qlCoinBalance;
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       {!lockUid && (
         <TextField
           label="대상 UID"
           required
           value={uid}
           onChange={setUid}
-          placeholder="사용자 UID"
+          placeholder="Firebase UID"
         />
       )}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SelectField
           label="재화"
           value={currency}
-          onChange={(v) => setCurrency(v as CurrencyType)}
+          onChange={(value) => setCurrency(value as CurrencyType)}
           options={CURRENCY_OPTIONS}
         />
         <SelectField
           label="처리"
           value={direction}
-          onChange={(v) => setDirection(v as EconomyDirection)}
+          onChange={(value) => setDirection(value as EconomyDirection)}
           options={DIRECTION_OPTIONS}
         />
       </div>
-      <NumberField label="수량" required min={1} value={amount} onChange={setAmount} />
+      <NumberField label="수량" required min={1} max={MAX_MANUAL_AMOUNT} value={amount} onChange={setAmount} />
       <TextField
         label="사유"
         required
         value={reason}
         onChange={setReason}
-        placeholder="예: 이벤트 보상, 오류 보상"
-        hint="감사 로그(createdBy)에 함께 기록됩니다. (1~300자)"
+        placeholder="예: 이벤트 보상, 오류 보정"
+        hint="재화 로그와 관리자 감사 로그에 남습니다. 개인정보/토큰은 적지 마세요."
       />
-      <div className="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm px-4 py-1.5 rounded"
+
+      <div className="rounded border border-zinc-700/60 bg-zinc-900/70 p-3">
+        <p className="mb-2 text-xs font-medium text-zinc-500">실행 예정</p>
+        <div className="flex flex-wrap gap-2">
+          <StatusBadge label={currencyLabel(currency)} tone="info" />
+          <StatusBadge label={directionLabel(direction)} tone={direction === 'grant' ? 'success' : 'danger'} />
+          <StatusBadge label={`${formatNumber(Number.isFinite(amount) ? Math.floor(amount) : 0)}개`} tone="neutral" />
+        </div>
+        <p className="mt-2 break-all text-xs text-zinc-500">대상 UID: {normalizedUid || '-'}</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        <ConfirmButton
+          tone={direction === 'revoke' ? 'danger' : 'primary'}
+          confirmLabel="실행 확정"
+          disabled={mutation.isPending || validationMessage !== null}
+          onConfirm={submit}
         >
-          {mutation.isPending ? '처리 중...' : direction === 'grant' ? '지급' : '차감'}
-        </button>
+          {direction === 'grant' ? '지급 실행' : '차감 실행'}
+        </ConfirmButton>
+        {validationMessage && <InlineMessage kind="warning">{validationMessage}</InlineMessage>}
         {mutation.isSuccess && (
           <InlineMessage kind="success">
             완료 · 변경 후 잔액 {formatNumber(newBalance)}
@@ -111,6 +140,6 @@ export function EconomyChangeForm({ presetUid, lockUid, onChanged }: EconomyChan
         )}
         {mutation.isError && <InlineMessage kind="error">{errorToMessage(mutation.error)}</InlineMessage>}
       </div>
-    </form>
+    </div>
   );
 }

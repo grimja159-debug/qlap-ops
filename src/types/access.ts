@@ -1,19 +1,8 @@
 /**
- * 접근 권한 플래그 타입.
+ * user_access 컬렉션의 기능 플래그.
  *
- * user_access 컬렉션의 boolean 플래그 3종.
- * (QLapServices API/src/modules/access/accessService.ts)
- *   - guildCreate : 길드 생성 허용
- *   - guildManage : 길드 관리 허용
- *   - aiReport    : AI 리포트 사용 허용
- *
- * 엔드포인트:
- *   GET  /api/admin/access          → { ok, accessList, count }
- *   GET  /api/admin/access/:uid      → { ok, access }
- *   POST /api/admin/access/update    → { ok, access }   본문: { uid, guildCreate?, guildManage?, aiReport? }
- *
- * 주의: role/plan/status 같은 "사용자 권한"은 여기가 아니라
- *       PATCH /api/admin/users/:uid/access(UserAccessProfilePatch)에서 다룬다.
+ * role/plan/status 같은 계정 권한은 여기서 다루지 않고
+ * PATCH /api/admin/users/:uid/access 에서 관리한다.
  */
 import type { IsoDate } from './common';
 

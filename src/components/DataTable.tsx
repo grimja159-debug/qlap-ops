@@ -1,11 +1,5 @@
 import clsx from 'clsx';
 
-/**
- * 범용 테이블.
- * - columns: 열 정의(헤더 + 셀 렌더 함수)
- * - onRowClick: 지정하면 행 전체가 클릭 가능해진다(유저 목록 → 상세 열기 등).
- * - loading/empty 상태를 직접 처리해, 페이지마다 같은 코드를 반복하지 않게 한다.
- */
 export interface Column<T> {
   key: string;
   header: string;
@@ -67,7 +61,7 @@ export function DataTable<T>({
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={clsx(
-                  'bg-zinc-800/30 hover:bg-zinc-700/30 transition-colors',
+                  'bg-zinc-800/30 transition-colors hover:bg-zinc-700/30',
                   onRowClick && 'cursor-pointer',
                 )}
               >

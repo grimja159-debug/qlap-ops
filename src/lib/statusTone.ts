@@ -10,6 +10,9 @@ import type {
   GuildStatus,
   GuildMemberStatus,
   PlanId,
+  BillingOrderStatus,
+  BillingPaymentStatus,
+  SubscriptionTier,
 } from './constants';
 import type { ServiceStatus } from '../types/system';
 
@@ -23,6 +26,7 @@ export function userStatusTone(status: UserStatus): Tone {
 
 export function seasonStatusTone(status: SeasonStatus): Tone {
   switch (status) {
+    case 'active':
     case 'registration':
       return 'success';
     case 'point_collection':
@@ -74,4 +78,72 @@ export function serviceStatusTone(status: ServiceStatus): Tone {
   if (status === 'online') return 'success';
   if (status === 'degraded') return 'warning';
   return 'danger';
+}
+
+export function billingOrderStatusTone(status: BillingOrderStatus): Tone {
+  switch (status) {
+    case 'PAID':
+      return 'success';
+    case 'PENDING':
+      return 'warning';
+    case 'MANUAL_REFUND_REQUIRED':
+      return 'warning'; // 운영자 PG 수동 환불 액션 필요
+    case 'FAILED':
+      return 'danger';
+    case 'REFUNDED':
+      return 'info';
+    case 'EXPIRED':
+    case 'CANCELED_INTERNAL':
+    case 'CANCELED':
+    default:
+      return 'neutral';
+  }
+}
+
+export function billingPaymentStatusTone(status: BillingPaymentStatus): Tone {
+  switch (status) {
+    case 'PAID':
+      return 'success';
+    case 'MANUAL_REFUND_REQUIRED':
+      return 'warning';
+    case 'FAILED':
+      return 'danger';
+    case 'CANCELED':
+    default:
+      return 'neutral';
+  }
+}
+
+export function subscriptionTierTone(tier: SubscriptionTier): Tone {
+  if (tier === 'ADMIN') return 'accent';
+  if (tier === 'PRO') return 'info';
+  return 'neutral';
+}
+
+export function dataSourceTone(source?: string | null): Tone {
+  if (source === 'server_db') return 'success';
+  if (source === 'firestore_fallback') return 'warning';
+  if (source === 'server_db_empty') return 'neutral';
+  return 'neutral';
+}
+
+export function dataSourceLabel(source?: string | null): string {
+  if (source === 'server_db') return 'Server DB';
+  if (source === 'server_db_empty') return 'Server DB empty';
+  if (source === 'firestore_fallback') return 'Legacy fallback';
+  return source && source.trim() ? source : 'Unknown';
+}
+
+export function dataSourceTitle(input: {
+  source?: string | null;
+  serverDbSource?: string | null;
+  serverDbMirrorStatus?: string | null;
+}): string {
+  const detail = [input.serverDbSource, input.serverDbMirrorStatus].filter(Boolean).join(' / ');
+  if (input.source === 'firestore_fallback') {
+    return detail
+      ? `Legacy fallback metadata: ${detail}`
+      : 'Legacy fallback metadata. Server DB is the primary source; this row came from a legacy fallback path.';
+  }
+  return detail || dataSourceLabel(input.source);
 }

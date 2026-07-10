@@ -25,25 +25,35 @@ export function PageSection({
   return (
     <section
       className={clsx(
-        'rounded-lg border bg-zinc-800/40 p-4',
-        accent ? 'border-violet-500/40 bg-violet-500/5' : 'border-zinc-700/60',
+        'rounded-xl border p-4 shadow-sm shadow-black/20 backdrop-blur-sm',
+        accent
+          ? 'border-violet-500/40 bg-gradient-to-br from-violet-500/[0.07] to-zinc-900/30'
+          : 'border-zinc-700/60 bg-zinc-800/40',
         className,
       )}
     >
       {(title || right) && (
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div>
-            {title && (
-              <h2
-                className={clsx(
-                  'text-xs font-medium uppercase tracking-wide',
-                  accent ? 'text-violet-400' : 'text-zinc-500',
-                )}
-              >
-                {title}
-              </h2>
-            )}
-            {description && <p className="text-xs text-zinc-500 mt-1">{description}</p>}
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2">
+            <span
+              className={clsx(
+                'mt-0.5 h-3.5 w-1 shrink-0 rounded-full',
+                accent ? 'bg-violet-400' : 'bg-zinc-600',
+              )}
+            />
+            <div>
+              {title && (
+                <h2
+                  className={clsx(
+                    'text-xs font-semibold uppercase tracking-wide',
+                    accent ? 'text-violet-300' : 'text-zinc-400',
+                  )}
+                >
+                  {title}
+                </h2>
+              )}
+              {description && <p className="mt-1 text-xs text-zinc-500">{description}</p>}
+            </div>
           </div>
           {right && <div className="shrink-0">{right}</div>}
         </div>

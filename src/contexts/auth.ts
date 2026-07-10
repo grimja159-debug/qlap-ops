@@ -13,8 +13,10 @@ export interface AuthState {
   firebaseUser: User | null;
   me: MeResponse | null;
   isAuthenticated: boolean;
-  /** 운영자 콘솔 사용 가능 여부 = status==='active' && role∈{operator,admin,super_admin}. */
+  /** (참고) 운영자 권한 여부 = status==='active' && role∈{operator,admin,super_admin}. */
   isOperator: boolean;
+  /** 콘솔 진입 게이트 = status==='active' && role==='super_admin'(완전 관리자). */
+  isFullAdmin: boolean;
   isLoading: boolean;
   authError: string | null;
   signOut: () => Promise<void>;

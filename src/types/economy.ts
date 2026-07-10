@@ -1,11 +1,9 @@
 /**
- * 재화(QL 코인 / GM 티켓) 지급·차감 타입.
+ * QL 코인 지급·차감 타입.
  *
  * 엔드포인트 (QLapServices API/src/modules/guilds/guildRoutes.ts):
  *   POST /api/admin/users/:uid/grant-qlcoin   본문 { amount, reason }
  *   POST /api/admin/users/:uid/revoke-qlcoin  본문 { amount, reason }
- *   POST /api/admin/users/:uid/grant-gmtiket  본문 { amount, reason }
- *   POST /api/admin/users/:uid/revoke-gmtiket 본문 { amount, reason }
  * 응답: { ok, result: { logId, user: AdminUser } }
  *
  * amount 는 항상 "양수"로 보내고, 차감은 revoke-* 엔드포인트로 구분한다

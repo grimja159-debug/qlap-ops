@@ -12,8 +12,8 @@
 
 ## 0. 30초 요약
 
-- 로그인은 Google. 백엔드 `GET /api/me` 가 돌려준 `role` 이 `operator/admin/super_admin` 이고
-  `status === 'active'` 여야 콘솔에 들어올 수 있다.
+- 로그인은 Google. 백엔드 `GET /api/me` 가 돌려준 `role` 이 **`super_admin`(완전 관리자)** 이고
+  `status === 'active'` 여야 콘솔에 들어올 수 있다. (operator/admin 은 진입 불가 — `ForbiddenPage`)
 - 화면에서 하는 거의 모든 행동은 **QLapServices Admin API(`/api/admin/...`)** 호출이다.
 - API 호출 코드는 전부 `src/services/*.ts` 에 모여 있다. 페이지는 서비스 함수만 부른다.
 - 백엔드에 **없는 기능**(공지, 상점 CRUD, 길드 변경, 랭킹 계산 등)은 가짜로 만들지 않고
@@ -53,11 +53,13 @@ npm run preview  # 빌드 결과 미리보기
 ### 역할(role) — `users.role`
 `user` < `operator` < `admin` < `super_admin`
 
-- **PRIVILEGED_ROLES** = `operator | admin | super_admin`
-  → 콘솔 진입 + 모든 `/api/admin/*` 호출 가능.
-- 백엔드 게이트: `requireOperator()` → `isOperatorProfile()` (`status==='active'` && role∈privileged)
-  (`QLapServices API/src/modules/users/userProfiles.ts`)
-- 프론트 게이트: `AuthContext.isOperator` (동일 조건) → 아니면 `ForbiddenPage`(403) 표시.
+- **PRIVILEGED_ROLES** = `operator | admin | super_admin` → 백엔드 `/api/admin/*`(조회/재화 등) 호출 가능.
+- **FULL_ADMIN_ROLES** = `super_admin` → **이 콘솔(qlap-ops) 진입 게이트**. operator/admin 은 진입 불가.
+- 백엔드 게이트:
+  - 일반 admin API: `requireOperator()` → `isOperatorProfile()` (`status==='active'` && role∈privileged)
+  - **테스트랩 mutation**: `requireSuperAdmin()` → role==='super_admin' 아니면 `SUPER_ADMIN_REQUIRED`(403)
+    (`QLapServices API/src/modules/testLab/testLabRoutes.ts`). `summary` 조회는 operator-level 로 허용.
+- 프론트 게이트: `AuthContext.isFullAdmin`(super_admin) → 아니면 `ForbiddenPage`(403) 표시.
 
 ### 계정 상태(status) — `users.status`
 `active | banned | deleted`
@@ -79,17 +81,23 @@ npm run preview  # 빌드 결과 미리보기
 | 그룹 | 메뉴 | 경로 | 핵심 기능 | 상태 |
 |---|---|---|---|---|
 | 개요 | 대시보드 | `/admin` | 유저/길드/시즌 요약, 헬스, 최근 코인 로그 | ✅ 실연동 |
-| 사용자 | 유저 관리 | `/admin/users` | 검색, 상세, 코인/티켓 지급·차감, 권한/상태/요금제/인증/Riot 수정, 활동 로그 | ✅ 실연동 |
+| 사용자 | 유저 관리 | `/admin/users` | **유저 추가**, **서버사이드 검색**, 상세, 코인/티켓 지급·차감, 권한/상태/요금제/인증/Riot 수정, **CS 메모**, **통합 활동 타임라인**, **CSV 내보내기**, **계정 삭제(soft/hard)** | ✅ 실연동 |
 | 사용자 | 접근 권한 | `/admin/access` | guildCreate/guildManage/aiReport 토글 | ✅ 실연동 |
 | 사용자 | 재화 관리 | `/admin/economy` | 코인/티켓 지급·차감 + 최근 재화 로그 | ✅ 실연동 |
-| 게임 | 길드 관리 | `/admin/guilds` | 검색/필터, 상세(정보·길드원·로그) | ✅ 조회 / ⚠ 변경 미연결 |
+| 게임 | 길드 관리 | `/admin/guilds` | 검색/필터, 상세, **엠블럼 보기/업로드/URL수정/제거**, 생성/해체·정지/완전삭제/길드장변경/강퇴(super_admin) | ✅ 실연동 |
 | 게임 | 시즌 관리 | `/admin/seasons` | 목록, 생성, 수정, 종료, 현재 시즌 | ✅ 실연동 |
-| 게임 | 상점/아이템 | `/admin/items` | 활성 아이템 목록, 아이템 지급 | ✅ 조회·지급 / ⚠ CRUD 미연결 |
-| 운영 | 공지 관리 | `/admin/notice` | (백엔드 없음) | ⚠ 미구현 안내 |
+| 게임 | 테스트랩 | `/admin/test-lab` | 테스트 유저/길드/재화/포인트/시나리오/정리 (super_admin 전용, 실데이터와 분리) | ✅ 실연동 / ⚠ 시즌 빠른도구만 미구현 |
+| 게임 | 상점/아이템 | `/admin/items` | 전체(비활성 포함) 목록, **생성/수정/활성토글/삭제**, 지급, **회수** | ✅ 실연동 |
+| 운영 | 공지 관리 | `/admin/notice` | 공지 **작성/수정/활성토글/삭제**(종류·고정·노출기간) | ✅ 실연동 |
 | 운영 | 운영 로그 | `/admin/logs` | 4종 로그(코인/티켓/길드행동/길드점수) + 필터 | ✅ 실연동 |
-| 운영 | 시스템 | `/admin/system` | QLapServices 헬스 체크 | ✅ 실연동 |
+| 운영 | 감사 로그 | `/admin/audit` | **모든 admin mutation 통합 감사**(actor/대상/변경) + 필터 + CSV | ✅ 실연동 |
+| 운영 | 서버 관리 | `/admin/system` | QLapServices 헬스 체크 + **유지보수 모드 토글** + **길드 생성/가입 조건** | ✅ 실연동 |
 
 > Tournament / AI 페이지는 대응 백엔드 API가 없어 **제거**했다(가짜 페이지를 두지 않는다).
+>
+> **2026-06-04 확장(super_admin 전용):** 통합 감사 로그·공지·유지보수 모드·실지표 대시보드 집계·아이템 CRUD/회수·
+> 서버사이드 유저 검색·유저 메모를 QLapServices `modules/admin/*`(신규) + `modules/guilds`·`modules/items` 확장으로
+> 구현했다(아래 §7 의 "필요 API" 중 상당수가 ✅ 로 전환). 신규/확장 엔드포인트는 전부 `requireSuperAdmin`/`assertSuperAdmin`.
 
 ---
 
@@ -108,7 +116,7 @@ src/
 │
 ├── types/                          # 백엔드 데이터 형태에 맞춘 타입
 │   ├── common.ts auth.ts user.ts access.ts economy.ts
-│   └── item.ts season.ts guild.ts log.ts system.ts
+│   └── item.ts season.ts guild.ts log.ts system.ts testLab.ts
 │
 ├── services/                       # ★ API 호출 함수 (페이지는 여기만 호출)
 │   ├── api.ts                      # fetch 래퍼: 봉투 해석 + ApiError + 쿼리빌더
@@ -118,9 +126,10 @@ src/
 │   ├── economyApi.ts               # /api/admin/users/:uid/(grant|revoke)-(qlcoin|gmtiket)
 │   ├── itemApi.ts                  # /api/items, /api/admin/items/grant
 │   ├── seasonApi.ts                # /api/admin/seasons (+:id, create/update/end)
-│   ├── guildApi.ts                 # /api/admin/guilds (+:id, members, logs)
+│   ├── guildApi.ts                 # /api/admin/guilds (+:id, members, logs, emblem)
 │   ├── logApi.ts                   # /api/admin/logs/{qlCoin,gmTiket,guildActions,guildPoints}
-│   └── systemApi.ts                # /api/health
+│   ├── systemApi.ts                # /api/health
+│   └── testLabApi.ts               # 테스트랩 API 명세 레지스트리(백엔드 구현 전 실제 호출 없음)
 │
 ├── contexts/AuthContext.tsx        # 로그인/토큰/역할 게이트(isOperator)
 ├── layouts/AdminLayout.tsx         # 인증·권한 가드 + 사이드바/헤더 셸
@@ -139,7 +148,7 @@ src/
 │
 └── pages/                          # 각 메뉴 화면 (서비스 호출 + 컴포넌트 조립)
     └── AdminDashboardPage / AdminUsersPage / AdminAccessPage / AdminEconomyPage /
-        AdminGuildsPage / AdminSeasonsPage / AdminItemsPage / AdminNoticePage /
+        AdminGuildsPage / AdminSeasonsPage / AdminTestLabPage / AdminItemsPage / AdminNoticePage /
         AdminLogsPage / AdminSystemPage / LoginPage / ForbiddenPage
 ```
 
@@ -164,17 +173,22 @@ src/
 | GET | `/api/me` | 로그인 프로필(없으면 생성). `{ user }` | AuthContext |
 | GET | `/api/me/access` | 본인 접근 플래그 | (참고용) |
 | GET | `/api/health` | 서비스 헬스. 인증 불필요 | 시스템/대시보드 |
+| GET/PATCH | `/api/admin/guild/settings` | 길드 생성/가입 전역 조건. QLapGuild가 `guild_settings/current`에서 읽어 실제 생성/가입/가입신청을 검증 | `{ createAllowedPlans, joinAllowedPlans, createAllowedRoles, joinAllowedRoles, createCostQlCoin, joinCostQlCoin, requireKakao/Riot/Discord* }` |
 
 ### 5.2 유저
 | Method | Path | 설명 | 본문/필터 |
 |---|---|---|---|
 | GET | `/api/admin/users` | 목록(최신 일부) `{ users }` | `limit`(≤100) |
+| POST | `/api/admin/users` | **유저 생성**(super_admin, Firestore 프로필만·로그인 불가) `{ user }` | `{ uid? email? displayName? plan? role? status? identityVerified? identityProvider? riotId? gameName? tagLine? puuid? initialQlCoin? initialGmTiket? }` |
 | GET | `/api/admin/users/:uid` | 단건 `{ user }` | — |
 | PATCH | `/api/admin/users/:uid/access` | 프로필 부분수정 `{ user }` | `plan? role? status? identityVerified? identityProvider? riotId? gameName? tagLine? puuid?` |
 | POST | `/api/admin/users/:uid/grant-qlcoin` | 코인 지급 `{ result }` | `{ amount>0, reason }` |
 | POST | `/api/admin/users/:uid/revoke-qlcoin` | 코인 차감 | `{ amount>0, reason }` |
 | POST | `/api/admin/users/:uid/grant-gmtiket` | 티켓 지급 | `{ amount>0, reason }` |
 | POST | `/api/admin/users/:uid/revoke-gmtiket` | 티켓 차감 | `{ amount>0, reason }` |
+| DELETE | `/api/admin/users/:uid` | **완전 삭제**(super_admin). users/지갑/접근/연동 제거 | `{ confirmation:'DELETE USER' }` |
+
+- **소프트 삭제** = `PATCH …/access { status:'deleted' }` (문서 보존, 복구 가능). **완전 삭제** = 위 DELETE(복구 불가, 권한 계정/본인 거부).
 
 - **권한 변경** = `PATCH …/access { role }`. **계정 정지/해제** = `{ status:'banned' | 'active' }`.
 - 차감 시 잔액이 음수가 되면 `INSUFFICIENT_BALANCE`/`GMTIKET_REQUIRED` 로 거부된다.
@@ -211,13 +225,24 @@ src/
 | POST | `/api/admin/seasons` | 생성 `{ season }` (모든 필드 필수, 날짜 8개 포함) |
 | PATCH | `/api/admin/seasons/:id` | 수정 `{ season }` (부분). **종료** = `{ status:'ended' }` |
 
-### 5.7 길드 (조회 전용)
-| Method | Path | 설명 | 필터 |
+### 5.7 길드 (조회 + 운영자 변경)
+| Method | Path | 설명 | 본문/필터 |
 |---|---|---|---|
 | GET | `/api/admin/guilds` | 목록 `{ guilds }` | `seasonId status q limit` |
 | GET | `/api/admin/guilds/:id` | 단건 `{ guild }` | — |
 | GET | `/api/admin/guilds/:id/members` | 길드원 `{ members }` | — |
 | GET | `/api/admin/guilds/:id/logs` | 로그 `{ logs:{ guildActions, guildPoints } }` | — |
+| POST | `/api/admin/guilds` | **생성**(super_admin) `{ guild }` | `{ seasonId, name, slug?, ownerUid?, maxMembers?, status?, description? }` |
+| PATCH | `/api/admin/guilds/:id` | **상태/기본정보 수정**(super_admin). 해체=`{status:'disbanded'}`, 정지=`{status:'banned'}` | `{ status? name? description? maxMembers? }` |
+| DELETE | `/api/admin/guilds/:id` | **완전 삭제**(super_admin). 길드+멤버+슬러그 제거 | `{ confirmation:'DELETE GUILD' }` |
+| PATCH | `/api/admin/guilds/:id/owner` | **길드장 변경**(super_admin). 기존 길드장은 manager 강등 | `{ newOwnerUid }` |
+| POST | `/api/admin/guilds/:id/emblem` | **엠블럼 파일 업로드**(super_admin). R2 저장 후 `guilds.emblemUrl` 교체 | `multipart/form-data file` |
+| PATCH | `/api/admin/guilds/:id/emblem` | **엠블럼 URL 수정/제거**(super_admin) | `{ emblemUrl:string|null }` |
+| DELETE | `/api/admin/guilds/:id/emblem` | **엠블럼 제거**(super_admin) | — |
+| POST | `/api/admin/guilds/:id/points` | **길드 포인트 추가**(super_admin). 길드 총점+시즌 엔트리 갱신, 사유 로그 기록 | `{ amount, reason }` |
+| DELETE | `/api/admin/guilds/:id/members/:uid` | **길드원 강퇴**(super_admin, status=kicked). owner 는 불가 | — |
+
+- 변경 계열은 2026-06-03 QLapServices `guildRoutes`+`adminGuildService` 에 추가(super_admin 전용, `byAdmin` 표시로 감사). 포인트 추가는 2026-06-04 추가되었고 `guildPointLogs`, 공개 `guildPoints/{seasonId}/guilds/{guildId}/logs`, `admin_audit_logs`에 사유를 남긴다.
 
 ### 자주 보는 에러 코드
 `LOGIN_REQUIRED`(401) · `INVALID_AUTH_TOKEN`(401) · `ADMIN_REQUIRED`(403) ·
@@ -277,19 +302,54 @@ src/
 | 아이템 회수 | `POST /api/admin/items/revoke { uid, itemId, quantity, reason }` |
 
 ### 7.3 길드 (변경 계열)
-| 기능 | 필요한 API |
-|---|---|
-| 생성/삭제/길드장변경/강퇴/공지/설정/신청관리 | `POST /api/admin/guilds`, `DELETE /api/admin/guilds/:id`, `PATCH …/owner`, `DELETE …/members/:uid`, `PATCH …/notice`, `PATCH …/settings`, `GET …/applications` |
+| 기능 | API | 상태 |
+|---|---|---|
+| 생성 | `POST /api/admin/guilds` | ✅ 구현(super_admin) |
+| 해체/정지/잠금/활성 | `PATCH /api/admin/guilds/:id { status }` | ✅ 구현(super_admin) |
+| 완전 삭제 | `DELETE /api/admin/guilds/:id` | ✅ 구현(super_admin, 확인문구) |
+| 길드장 변경 | `PATCH /api/admin/guilds/:id/owner` | ✅ 구현(super_admin) |
+| 길드원 강퇴 | `DELETE /api/admin/guilds/:id/members/:uid` | ✅ 구현(super_admin) |
+| 엠블럼 보기/수정 | `POST/PATCH/DELETE /api/admin/guilds/:id/emblem` | ✅ 구현(super_admin, R2 업로드/URL수정/제거) |
+| 공지/설정/가입신청 관리 | `PATCH …/notice`, `PATCH …/settings`, `GET …/applications` | ⚠ 미구현 |
 
-> 이 기능들은 **QLapGuild API**에 owner/manager 권한 기준으로 일부 존재하지만, nginx가
-> QLapGuild API를 외부로 노출하지 않아 콘솔이 호출할 수 없다. 두 가지 해결책:
-> (a) QLapServices에 운영자용 길드 관리 엔드포인트 추가(권장), 또는
-> (b) nginx에 QLapGuild API 프록시(`/guilds/` 등) 추가 후 콘솔에 두 번째 베이스 URL 설정.
+> 생성/삭제/길드장변경/강퇴는 2026-06-03 QLapServices(`adminGuildService.ts`)에 운영자용으로 추가했다(=권장안 (a) 채택).
+> 공지/설정/가입신청 관리는 아직 미구현 — 필요 시 동일 방식으로 QLapServices 에 추가하거나 QLapGuild API 프록시를 검토.
 
 ### 7.4 시즌
 | 기능 | 필요한 API |
 |---|---|
 | 랭킹 계산 실행 | `POST /api/admin/seasons/:id/recalculate-rankings` (현재 QLapGuild 워커에만 존재) |
+| 테스트용 상태 빠른 변경 | `POST /api/admin/seasons/:id/status { status, reason }` |
+| 테스트용 시즌 복제 | `POST /api/admin/seasons/:id/clone { reason }` |
+
+### 7.4.1 테스트랩 (구현 완료)
+`/admin/test-lab` 화면은 개발/스테이징/데모 데이터를 빠르게 만들기 위한 운영 도구다.
+**super_admin 전용**이며, QLapServices의 `modules/testLab/*` 에 7개 mutation 이 실제 구현되어
+콘솔 버튼이 진짜 API를 호출한다. 모든 생성 데이터에는 아래 메타데이터가 저장된다.
+
+- `isTestUser: true` 또는 `isTestGuild: true`
+- `seedBatchId` (생성 단위. 시나리오는 한 batchId 로 묶임)
+- `source: "test-lab"` (유저/길드/지갑/접근/연동), 로그는 `testLab: true`
+- `createdBy`(작업한 super_admin uid) · `reason` · `createdAt`
+
+> 테스트 유저는 **Firestore 문서만** 만든다(`users`/`user_wallets`/`user_access`/`linked_accounts`).
+> Firebase Auth 계정은 만들지 않으므로 실제 로그인은 불가하며, 콘솔/길드/랭킹 화면 검증용이다.
+
+| 기능 | 엔드포인트 | 핵심 동작/안전장치 | 상태 |
+|---|---|---|---|
+| 테스트 요약 | `GET /api/admin/test-lab/summary` | 테스트 유저/길드 수, 최근 seedBatchId, 현재 시즌, 감사로그 5건 (operator-level) | ✅ |
+| 테스트 유저 생성 | `POST .../seed-users` | `count` 1~200, 지갑/접근/연동 문서 동시 생성, test 메타데이터 태깅 | ✅ super_admin |
+| 테스트 길드 생성 | `POST .../seed-guilds` | seasonId 검증, owner 자동(기존/신규 테스트 유저), guildSlugs 등록 | ✅ super_admin |
+| 길드원 자동 배치 | `POST .../assign-guild-members` | 역할 비율 배치, 부족분 자동 생성, 중복 멤버 방지 | ✅ super_admin |
+| 길드 포인트 일괄 | `POST .../bulk-guild-points` | even/random/top_heavy 분포, `guildPointLogs`(testLab) 기록, 대상 길드끼리 순위 | ✅ super_admin |
+| 재화 일괄 | `POST .../bulk-wallet` | **테스트 유저만** grant/revoke/set, `qlCoinLogs`/`gmTiketLogs`에 createdBy·reason | ✅ super_admin |
+| 시나리오 실행 | `POST .../scenario` | starter_demo/guild_ranking/tournament_advance/wallet_shop 프리셋 | ✅ super_admin |
+| 테스트 데이터 정리 | `POST .../cleanup` | dryRun 선행, 실제 삭제는 `DELETE TEST DATA` 확인 + `seedBatchId` 범위의 테스트 메타데이터 보유 문서만 | ✅ super_admin |
+
+- 권한: mutation 은 `requireSuperAdmin`(403 `SUPER_ADMIN_REQUIRED`). 모든 변경은 `testLabAuditLogs` 에 기록.
+- 성공 후 React Query 무효화: `admin-users`, `admin-guilds`, `seasons`, `logs`, `test-lab-summary`.
+- **미구현(범위 밖)**: 시즌 빠른 도구(`/api/admin/seasons/:id/{status,clone,recalculate-rankings}`)는
+  시즌 라우트 변경이 필요해 제외했고, 시즌 탭에 `NotImplementedNotice` 로 표시된다.
 
 ### 7.5 공지
 | 기능 | 필요한 API |
@@ -322,6 +382,7 @@ src/
 - **기능 플래그**: 접근 권한 → UID 조회/목록 → 편집 → 토글 → 저장.
 - **시즌 생성**: 시즌 관리 → “+ 새 시즌 생성” → 모든 기간/조건 입력. **종료**는 목록의 종료 버튼.
 - **길드 점검**: 길드 관리 → 검색 → 행 클릭 → 정보/길드원/로그 확인.
+- **테스트랩 준비**: 테스트랩 → 필요한 seed/cleanup/scenario API 명세 확인. 백엔드 구현 전 실행 버튼은 비활성.
 - **로그 감사**: 운영 로그 → 종류 탭 + UID/길드/시즌 필터.
 - **헬스 체크**: 시스템(30초 자동 갱신).
 
@@ -329,7 +390,8 @@ src/
 
 ## 9. 자주 묻는 트러블슈팅
 
-- **403 / “권한이 없습니다”**: 로그인 계정의 `users.role` 이 operator 이상인지, `status==='active'` 인지 확인.
+- **403 / “권한이 없습니다”**: 콘솔 진입은 `users.role==='super_admin'` && `status==='active'` 여야 한다.
+  (operator/admin 은 진입 불가.) 테스트랩 mutation 에서 `SUPER_ADMIN_REQUIRED` 가 나오면 동일 원인.
 - **“서버에 연결할 수 없습니다”(NETWORK_ERROR)**: QLapServices(포트 6000)와 nginx(8080) 기동,
   `.env` 의 베이스 URL 확인.
 - **목록에 유저/길드가 안 보임**: 백엔드가 최신 일부(≤100)만 주므로 검색 대신 UID/ID 직접 조회 사용.
@@ -337,5 +399,6 @@ src/
 
 ---
 
-_백엔드(`PROJECT_SERVER_BACKEND`)는 읽기 전용 참조다. 콘솔은 그 코드를 수정하지 않으며,
-오직 위 API를 통해서만 상호작용한다._
+_백엔드(`PROJECT_SERVER_BACKEND`)는 기본적으로 읽기 전용 참조다. 단, 테스트랩 기능을 위해
+**QLapServices API 의 `modules/testLab/*` 와 `server.ts` manifest** 에 한해 7개 mutation 을 구현했다.
+그 외 백엔드 서버/모듈은 수정하지 않으며, 콘솔은 위 API를 통해서만 상호작용한다._

@@ -42,11 +42,9 @@ const DATE_GROUPS: { label: string; keys: [DateKey, DateKey] }[] = [
   { label: '토너먼트 기간', keys: ['tournamentStartAt', 'tournamentEndAt'] },
 ];
 
-const STATUS_OPTIONS = SEASON_STATUSES.map((s) => ({ value: s, label: SEASON_STATUS_LABELS[s] }));
+const STATUS_OPTIONS = SEASON_STATUSES.map((s) => ({ value: s, label: SEASON_STATUS_LABELS[s] ?? s }));
 
 const FLAG_FIELDS: { key: keyof Season & string; label: string }[] = [
-  { key: 'requireGmTiketForCreate', label: '길드 생성 시 GM 티켓 필요' },
-  { key: 'requireGmTiketForJoin', label: '길드 가입 시 GM 티켓 필요' },
   { key: 'requireIdentityVerification', label: '본인인증 필요' },
   { key: 'requireRiotAccount', label: 'Riot 계정 필요' },
 ];
@@ -78,8 +76,8 @@ export function SeasonFormModal({ open, onClose, initial }: SeasonFormModalProps
   const [rankMin, setRankMin] = useState<number>(initial?.tournamentRankMin ?? 1);
   const [rankMax, setRankMax] = useState<number>(initial?.tournamentRankMax ?? 100);
   const [flags, setFlags] = useState({
-    requireGmTiketForCreate: initial?.requireGmTiketForCreate ?? true,
-    requireGmTiketForJoin: initial?.requireGmTiketForJoin ?? true,
+    requireGmTiketForCreate: false,
+    requireGmTiketForJoin: false,
     requireIdentityVerification: initial?.requireIdentityVerification ?? true,
     requireRiotAccount: initial?.requireRiotAccount ?? true,
   });

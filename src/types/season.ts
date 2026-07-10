@@ -79,3 +79,15 @@ export interface SeasonCreateRequest {
 
 /** 시즌 수정 본문(부분). seasonId 는 무시된다. */
 export type SeasonUpdateRequest = Partial<Omit<SeasonCreateRequest, 'seasonId'>>;
+
+/** 시즌 롤오버(이관) 결과. 활성 길드+멤버를 대상 시즌으로 이관(새 시즌 GP 0부터). */
+export interface SeasonRolloverReport {
+  targetSeasonId: string;
+  apply: boolean;
+  activeGuilds: number;
+  entriesCreated: number;
+  entriesAlreadyExist: number;
+  membershipsCopied: number;
+  guildDocsUpdated: number;
+  guilds: Array<{ guildId: string; name: string; memberCount: number; entryExists: boolean }>;
+}

@@ -3,7 +3,7 @@ import { onIdTokenChanged, signOut as firebaseSignOut, type User } from 'firebas
 import { auth } from '../lib/firebase';
 import { setAuthToken } from '../services/api';
 import { authApi } from '../services/authApi';
-import { isPrivilegedRole } from '../lib/constants';
+import { isFullAdminRole, isPrivilegedRole } from '../lib/constants';
 import type { MeResponse } from '../types/auth';
 import { AuthContext } from './auth';
 
@@ -63,10 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = firebaseUser !== null;
   const isOperator = me != null && me.status === 'active' && isPrivilegedRole(me.role);
+  // 콘솔 진입은 완전 관리자(super_admin)만 허용한다.
+  const isFullAdmin = me != null && me.status === 'active' && isFullAdminRole(me.role);
 
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, me, isAuthenticated, isOperator, isLoading, authError, signOut }}
+      value={{ firebaseUser, me, isAuthenticated, isOperator, isFullAdmin, isLoading, authError, signOut }}
     >
       {children}
     </AuthContext.Provider>

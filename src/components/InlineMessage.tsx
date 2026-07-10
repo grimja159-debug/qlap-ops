@@ -6,7 +6,7 @@ import clsx from 'clsx';
  *
  * 에러 객체 → 메시지 변환은 lib/apiError.ts 의 errorToMessage() 를 사용한다.
  */
-export type MessageKind = 'success' | 'error' | 'info';
+export type MessageKind = 'success' | 'error' | 'info' | 'warning';
 
 interface InlineMessageProps {
   kind: MessageKind;
@@ -18,6 +18,7 @@ const KIND_CLASSES: Record<MessageKind, string> = {
   success: 'text-emerald-400',
   error: 'text-red-400',
   info: 'text-zinc-400',
+  warning: 'text-amber-300',
 };
 
 export function InlineMessage({ kind, children, className }: InlineMessageProps) {

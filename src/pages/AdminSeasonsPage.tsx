@@ -12,7 +12,7 @@ import { seasonApi } from '../services/seasonApi';
 import { SEASON_STATUS_LABELS, ACTIVE_SEASON_STATUSES } from '../lib/constants';
 import { seasonStatusTone } from '../lib/statusTone';
 import { formatDate } from '../lib/format';
-import type { Season } from '../types/season';
+import type { Season, SeasonRolloverReport } from '../types/season';
 
 /**
  * 시즌 관리 페이지.
@@ -29,6 +29,20 @@ export function AdminSeasonsPage() {
   const endMutation = useMutation({
     mutationFn: (id: string) => seasonApi.end(id),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['seasons'] }),
+  });
+
+  const setCurrentMutation = useMutation({
+    mutationFn: (id: string) => seasonApi.setCurrent(id),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['seasons'] }),
+  });
+
+  const [rollover, setRollover] = useState<SeasonRolloverReport | null>(null);
+  const rolloverMutation = useMutation({
+    mutationFn: ({ id, apply }: { id: string; apply: boolean }) => seasonApi.rollover(id, { apply }),
+    onSuccess: (report) => {
+      setRollover(report);
+      if (report.apply) void qc.invalidateQueries({ queryKey: ['seasons'] });
+    },
   });
 
   const current = seasons?.find((s) => ACTIVE_SEASON_STATUSES.includes(s.status));
@@ -48,7 +62,7 @@ export function AdminSeasonsPage() {
     {
       key: 'status',
       header: '상태',
-      render: (r) => <StatusBadge label={SEASON_STATUS_LABELS[r.status]} tone={seasonStatusTone(r.status)} />,
+      render: (r) => <StatusBadge label={SEASON_STATUS_LABELS[r.status] ?? r.status} tone={seasonStatusTone(r.status)} />,
     },
     {
       key: 'create',
@@ -79,6 +93,32 @@ export function AdminSeasonsPage() {
           >
             수정
           </button>
+          {!ACTIVE_SEASON_STATUSES.includes(r.status) && (
+            <ConfirmButton
+              tone="primary"
+              confirmLabel="현재 시즌 지정"
+              disabled={setCurrentMutation.isPending}
+              onConfirm={() => setCurrentMutation.mutate(r.id)}
+            >
+              현재 시즌 지정
+            </ConfirmButton>
+          )}
+          <button
+            onClick={() => rolloverMutation.mutate({ id: r.id, apply: false })}
+            disabled={rolloverMutation.isPending}
+            className="text-xs text-cyan-400 hover:text-cyan-300 px-2 py-0.5 border border-cyan-700/50 rounded hover:bg-cyan-500/10 disabled:opacity-50"
+            title="활성 길드+멤버를 이 시즌으로 이관(미리보기)"
+          >
+            이관 미리보기
+          </button>
+          <ConfirmButton
+            tone="danger"
+            confirmLabel="이관 실행 확정"
+            disabled={rolloverMutation.isPending}
+            onConfirm={() => rolloverMutation.mutate({ id: r.id, apply: true })}
+          >
+            이관 실행
+          </ConfirmButton>
           {r.status !== 'ended' && (
             <ConfirmButton
               tone="danger"
@@ -106,11 +146,22 @@ export function AdminSeasonsPage() {
       {endMutation.isError && (
         <InlineMessage kind="error">{errorToMessage(endMutation.error)}</InlineMessage>
       )}
+      {rolloverMutation.isError && (
+        <InlineMessage kind="error">{errorToMessage(rolloverMutation.error)}</InlineMessage>
+      )}
+      {rollover && (
+        <InlineMessage kind={rollover.apply ? 'success' : 'info'}>
+          시즌 이관 {rollover.apply ? '완료' : '미리보기'} (대상 <span className="font-mono">{rollover.targetSeasonId}</span>):
+          활성 길드 {rollover.activeGuilds} · 새 시즌엔트리 {rollover.entriesCreated}생성/{rollover.entriesAlreadyExist}기존 ·
+          멤버십 {rollover.membershipsCopied}{rollover.apply ? '복사' : '예정'}.
+          {!rollover.apply && ' — "이관 실행"으로 실제 적용하세요. (옛 시즌 GP는 보존, 새 시즌은 0부터)'}
+        </InlineMessage>
+      )}
 
       {current && (
         <PageSection accent title="현재 진행 중인 시즌">
           <div className="flex items-center gap-3 mb-3">
-            <StatusBadge label={SEASON_STATUS_LABELS[current.status]} tone={seasonStatusTone(current.status)} />
+            <StatusBadge label={SEASON_STATUS_LABELS[current.status] ?? current.status} tone={seasonStatusTone(current.status)} />
             <span className="font-semibold text-zinc-200">{current.title}</span>
             <span className="font-mono text-xs text-zinc-500">{current.seasonId}</span>
           </div>

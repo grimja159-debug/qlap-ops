@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "audit:firestore-sdk": "node scripts/audit-no-firestore-sdk.mjs",
+    "smoke:admin-frontend": "node scripts/admin-frontend-readiness-smoke.mjs",
+    "preflight:frontend": "npm run audit:firestore-sdk && npm run build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

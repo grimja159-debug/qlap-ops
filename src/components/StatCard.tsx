@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import clsx from 'clsx';
 
 interface StatCardProps {
@@ -8,20 +9,29 @@ interface StatCardProps {
   className?: string;
 }
 
-export function StatCard({ label, value, sub, accent, className }: StatCardProps) {
+export const StatCard = memo(function StatCard({ label, value, sub, accent, className }: StatCardProps) {
   return (
     <div
       className={clsx(
-        'rounded-lg border border-zinc-700/60 bg-zinc-800/50 p-4 flex flex-col gap-1',
-        accent && 'border-violet-500/40 bg-violet-500/5',
+        'group relative flex flex-col gap-1 overflow-hidden rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5',
+        accent
+          ? 'border-violet-500/40 bg-gradient-to-br from-violet-500/10 to-zinc-900/40 hover:border-violet-500/60'
+          : 'border-zinc-700/60 bg-gradient-to-br from-zinc-800/60 to-zinc-900/30 hover:border-zinc-600',
         className,
       )}
     >
-      <span className="text-xs text-zinc-500 uppercase tracking-wide font-medium">{label}</span>
-      <span className={clsx('text-2xl font-semibold tabular-nums', accent ? 'text-violet-300' : 'text-zinc-100')}>
+      {/* 상단 액센트 라인 */}
+      <span
+        className={clsx(
+          'absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent transition-colors',
+          accent ? 'via-violet-400/70' : 'via-zinc-600/60 group-hover:via-violet-500/50',
+        )}
+      />
+      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</span>
+      <span className={clsx('text-2xl font-semibold tabular-nums', accent ? 'text-violet-200' : 'text-zinc-100')}>
         {typeof value === 'number' ? value.toLocaleString() : value}
       </span>
       {sub && <span className="text-xs text-zinc-500">{sub}</span>}
     </div>
   );
-}
+});

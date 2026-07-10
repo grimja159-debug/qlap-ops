@@ -1,17 +1,11 @@
 import { useEffect } from 'react';
 import clsx from 'clsx';
 
-/**
- * 중앙 모달 다이얼로그. 유저 상세, 시즌 생성/수정 같은 집중 작업에 사용.
- * - ESC 키와 배경 클릭으로 닫힌다.
- * - 본문이 길면 내부 스크롤(max-h)로 처리한다.
- */
 interface ModalProps {
   open: boolean;
   title: string;
   onClose: () => void;
   children: React.ReactNode;
-  /** 헤더 우측 영역(상태 배지 등). */
   headerRight?: React.ReactNode;
   size?: 'md' | 'lg' | 'xl';
 }
@@ -36,31 +30,28 @@ export function Modal({ open, title, onClose, children, headerRight, size = 'lg'
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[6vh] overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 pt-[6vh]"
       onClick={onClose}
     >
       <div
-        className={clsx(
-          'w-full rounded-lg border border-zinc-700 bg-zinc-900 shadow-2xl',
-          SIZE_CLASSES[size],
-        )}
+        className={clsx('w-full rounded-lg border border-zinc-700 bg-zinc-900 shadow-2xl', SIZE_CLASSES[size])}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 border-b border-zinc-700/60 px-5 py-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <h2 className="text-sm font-semibold text-zinc-200 truncate">{title}</h2>
+          <div className="flex min-w-0 items-center gap-3">
+            <h2 className="truncate text-sm font-semibold text-zinc-200">{title}</h2>
             {headerRight}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-zinc-500 hover:text-zinc-200 text-lg leading-none px-1"
+            className="px-1 text-lg leading-none text-zinc-500 hover:text-zinc-200"
             aria-label="닫기"
           >
-            ×
+            x
           </button>
         </div>
-        <div className="p-5 max-h-[78vh] overflow-y-auto">{children}</div>
+        <div className="max-h-[78vh] overflow-y-auto p-5">{children}</div>
       </div>
     </div>
   );

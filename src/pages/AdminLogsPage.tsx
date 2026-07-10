@@ -12,6 +12,11 @@ import type { GuildActionLog, GuildPointLog } from '../types/guild';
 
 /** 4종 로그 행의 합집합 — useQuery 데이터 타입으로 사용. */
 type LogRow = CurrencyLog | GuildActionLog | GuildPointLog;
+type LogStorageMeta = {
+  storageSource?: string | null;
+  firestoreReads?: number | null;
+  sourceTable?: string | null;
+};
 
 /**
  * 운영 로그 페이지.
@@ -19,7 +24,7 @@ type LogRow = CurrencyLog | GuildActionLog | GuildPointLog;
  * 4개 로그 컬렉션을 탭으로 전환하며, uid / guildId / seasonId 로 필터링한다.
  * (백엔드 GET /api/admin/logs/:kind 가 그대로 지원하는 필터다.)
  *
- * [감사 관점] qlCoin/gmTiket 로그는 createdBy(조작 주체)를 포함해 "누가 언제 얼마를"
+ * [감사 관점] qlCoin 로그는 createdBy(조작 주체)를 포함해 "누가 언제 얼마를"
  * 추적할 수 있다. 단, 권한/상태 변경과 아이템 지급은 별도 감사 로그가 없다(ADMIN_GUIDE 참고).
  */
 export function AdminLogsPage() {
@@ -34,7 +39,6 @@ export function AdminLogsPage() {
     queryFn: () => {
       const f = { ...filter, limit: 100 };
       if (kind === 'qlCoin') return logApi.qlCoin(f);
-      if (kind === 'gmTiket') return logApi.gmTiket(f);
       if (kind === 'guildActions') return logApi.guildActions(f);
       return logApi.guildPoints(f);
     },
@@ -78,7 +82,7 @@ export function AdminLogsPage() {
       </PageSection>
 
       <QueryState isLoading={query.isLoading} error={query.error}>
-        {kind === 'qlCoin' || kind === 'gmTiket' ? (
+        {kind === 'qlCoin' ? (
           <CurrencyLogTable rows={(query.data as CurrencyLog[]) ?? []} />
         ) : kind === 'guildActions' ? (
           <ActionLogTable rows={(query.data as GuildActionLog[]) ?? []} />
@@ -116,6 +120,31 @@ function FilterInput({
   );
 }
 
+function LogSourceBadge({ row }: { row: LogStorageMeta }) {
+  const rawSource = row.storageSource ?? row.sourceTable ?? null;
+  const isServerDb = typeof rawSource === 'string' && rawSource.includes('server_db');
+  const isFirestore = typeof rawSource === 'string' && rawSource.includes('firestore');
+  const label = isServerDb ? 'Server DB' : isFirestore ? 'Firestore' : rawSource ?? 'unknown';
+  const reads = row.firestoreReads ?? null;
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <span
+        className={
+          isServerDb
+            ? 'rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300'
+            : isFirestore
+              ? 'rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-300'
+              : 'rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-400'
+        }
+        title={rawSource ?? 'storage source missing'}
+      >
+        {label}
+      </span>
+      {reads !== null ? <span className="text-[10px] text-zinc-500">reads {reads}</span> : null}
+    </div>
+  );
+}
+
 function CurrencyLogTable({ rows }: { rows: CurrencyLog[] }) {
   const columns: Column<CurrencyLog>[] = [
     { key: 'createdAt', header: '시각', render: (r) => <span className="text-xs text-zinc-500">{formatDateTime(r.createdAt)}</span> },
@@ -133,6 +162,7 @@ function CurrencyLogTable({ rows }: { rows: CurrencyLog[] }) {
     { key: 'after', header: '잔액', render: (r) => <span className="font-mono text-xs text-zinc-300">{formatNumber(r.afterBalance)}</span> },
     { key: 'reason', header: '사유', render: (r) => <span className="text-xs text-zinc-400">{r.reason}</span> },
     { key: 'by', header: '처리자', render: (r) => <CopyableId value={r.createdBy} /> },
+    { key: 'storage', header: '저장소', render: (r) => <LogSourceBadge row={r} /> },
   ];
   return <DataTable columns={columns} data={rows} rowKey={(r) => r.id} emptyMessage="로그가 없습니다" />;
 }
@@ -144,6 +174,7 @@ function ActionLogTable({ rows }: { rows: GuildActionLog[] }) {
     { key: 'guildId', header: '길드', render: (r) => <CopyableId value={r.guildId} /> },
     { key: 'uid', header: '대상', render: (r) => <CopyableId value={r.uid} /> },
     { key: 'season', header: '시즌', render: (r) => <span className="text-xs text-zinc-400">{r.seasonId ?? '–'}</span> },
+    { key: 'storage', header: '저장소', render: (r) => <LogSourceBadge row={r} /> },
   ];
   return <DataTable columns={columns} data={rows} rowKey={(r) => r.id} emptyMessage="로그가 없습니다" />;
 }
@@ -155,6 +186,7 @@ function PointLogTable({ rows }: { rows: GuildPointLog[] }) {
     { key: 'source', header: '출처', render: (r) => <span className="text-xs text-zinc-400">{r.source ?? '–'}</span> },
     { key: 'point', header: '점수', render: (r) => <span className="font-mono text-xs text-zinc-300">{formatSignedNumber(r.point ?? 0)}</span> },
     { key: 'uid', header: '대상', render: (r) => <CopyableId value={r.uid ?? null} /> },
+    { key: 'storage', header: '저장소', render: (r) => <LogSourceBadge row={r} /> },
   ];
   return <DataTable columns={columns} data={rows} rowKey={(r) => r.id} emptyMessage="로그가 없습니다" />;
 }

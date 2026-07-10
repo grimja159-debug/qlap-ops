@@ -22,7 +22,6 @@ export interface MeResponse {
   role: UserRole;
   status: UserStatus;
   qlCoinBalance: number;
-  gmTiketBalance: number;
   identityVerified: boolean;
   identityProvider: IdentityProvider;
   connectedAccounts: {
@@ -31,6 +30,18 @@ export interface MeResponse {
     naver: string | null;
     riot: string | null;
   };
+  kakaoVerified: boolean;
+  kakaoProfile: {
+    id: string;
+    nickname: string | null;
+    profileImageUrl: string | null;
+  } | null;
+  discordVerified: boolean;
+  discordProfile: {
+    id: string;
+    username: string | null;
+    linkedAt: string | null;
+  } | null;
   createdAt: IsoDate;
   updatedAt: IsoDate;
   lastLoginAt: IsoDate;

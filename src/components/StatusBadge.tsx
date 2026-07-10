@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import clsx from 'clsx';
 import type { Tone } from '../lib/statusTone';
 
@@ -21,7 +22,8 @@ const TONE_CLASSES: Record<Tone, string> = {
   neutral: 'bg-zinc-700/50 text-zinc-400 border border-zinc-600',
 };
 
-export function StatusBadge({ label, tone = 'neutral', className }: StatusBadgeProps) {
+// 표 행마다 다수 렌더되는 순수 표시용 배지 — 부모 리렌더 시 동일 props면 리렌더를 건너뛴다.
+export const StatusBadge = memo(function StatusBadge({ label, tone = 'neutral', className }: StatusBadgeProps) {
   return (
     <span
       className={clsx(
@@ -33,4 +35,4 @@ export function StatusBadge({ label, tone = 'neutral', className }: StatusBadgeP
       {label}
     </span>
   );
-}
+});

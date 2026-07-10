@@ -3,7 +3,7 @@ import { USER_ROLE_LABELS } from '../lib/constants';
 
 /**
  * 권한 부족 화면.
- * 로그인은 됐지만 운영자(operator/admin/super_admin) 권한이 없을 때 표시된다.
+ * 로그인은 됐지만 완전 관리자(super_admin) 권한이 없을 때 표시된다.
  */
 export function ForbiddenPage() {
   const { me, signOut } = useAuth();
@@ -12,7 +12,7 @@ export function ForbiddenPage() {
     <div className="flex flex-col items-center justify-center h-screen bg-zinc-950 gap-4">
       <div className="text-6xl font-bold text-zinc-700">403</div>
       <div className="text-zinc-400 text-lg font-medium">접근 권한이 없습니다</div>
-      <p className="text-zinc-600 text-sm">운영자 이상 권한(operator / admin / super_admin)이 필요합니다.</p>
+      <p className="text-zinc-600 text-sm">완전 관리자(super_admin) 권한이 필요합니다.</p>
       {me && (
         <p className="text-zinc-700 text-xs">
           로그인 계정: <span className="text-zinc-500">{me.email}</span> (

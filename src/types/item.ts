@@ -1,29 +1,31 @@
-/**
- * 아이템 / 상점 타입.
- *
- * 엔드포인트:
- *   GET  /api/items                → { ok, items: Item[] }   (active=true 인 것만)
- *   POST /api/admin/items/grant    → { ok, userItem, logId } 본문 { uid, itemId, quantity, reason }
- *
- * 주의: items 문서의 스키마는 앱이 자유롭게 정의한다. 백엔드는 { id, ...data } 를 그대로 내려준다.
- *       그래서 화면에서 꼭 쓰는 필드만 optional 로 선언하고, 나머지는 [key]로 받아 원본을 보존한다.
- *
- * 미구현(백엔드 API 없음): 아이템 추가/수정/비활성화/삭제/가격변경, 아이템 회수.
- *   → ADMIN_GUIDE.md 의 "필요한 추가 API" 참고.
- */
 import type { IsoDate } from './common';
 
+/**
+ * Item and shop admin types.
+ *
+ * qlap-ops already connects item create/update/deactivate/delete/grant/revoke through
+ * itemApi/AdminItemsPage. Item documents may carry extra backend-defined fields, so this type
+ * preserves unknown keys.
+ */
 export interface Item {
   id: string;
   name?: string;
   description?: string;
   category?: string;
+  itemType?: 'entry_ticket' | string;
+  ticketCode?: string;
+  targetFeature?: EntryTicketTarget | string;
+  maxUses?: number;
+  expiresAt?: IsoDate | string;
+  consumeReason?: string;
   price?: number;
   currency?: string;
+  /** Per-user ownership limit. 0/undefined means no fixed limit. */
+  maxPerUser?: number;
   active?: boolean;
   createdAt?: IsoDate;
   updatedAt?: IsoDate;
-  /** 위에 명시하지 않은 임의 필드도 보존(아이템 스키마가 앱마다 다르므로). */
+  imageUrl?: string;
   [key: string]: unknown;
 }
 
@@ -34,7 +36,6 @@ export interface ItemGrantRequest {
   reason: string;
 }
 
-/** 지급 결과로 돌아오는 사용자 보유 아이템(user_items). */
 export interface UserItem {
   id: string;
   uid: string;
@@ -49,3 +50,30 @@ export interface ItemGrantResult {
   userItem: UserItem;
   logId: string;
 }
+
+export interface ItemUpsertRequest {
+  itemId?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  itemType?: 'entry_ticket' | '';
+  ticketCode?: string;
+  targetFeature?: EntryTicketTarget | '';
+  maxUses?: number;
+  expiresAt?: string;
+  consumeReason?: string;
+  imageUrl?: string;
+  price?: number;
+  currency?: string;
+  maxPerUser?: number;
+  active?: boolean;
+}
+
+export type ItemRevokeRequest = ItemGrantRequest;
+
+export type EntryTicketTarget =
+  | 'guild_create'
+  | 'guild_join'
+  | 'live_cw_create'
+  | 'live_cw_join'
+  | 'tournament_join';

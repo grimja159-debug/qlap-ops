@@ -43,3 +43,6 @@ CACHE/
 Thumbs.db
 *.log
 npm-debug.log*
+
+.claude/
+.playwright-mcp/

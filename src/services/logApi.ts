@@ -2,15 +2,14 @@
  * 운영 로그 API.
  *
  * 엔드포인트 (QLapServices Admin API):
- *   GET /api/admin/logs/gmTiket?uid=&guildId=&seasonId=&type=&limit=  → { gmTiketLogs }
  *   GET /api/admin/logs/qlCoin?...                                    → { qlCoinLogs }
  *   GET /api/admin/logs/guildActions?...                            → { guildActions }
  *   GET /api/admin/logs/guildPoints?...                             → { guildPoints }
  *
- * 응답 키가 로그 종류마다 다르므로(:key 에 따라 gmTiketLogs/qlCoinLogs/guildActions/guildPoints)
+ * 응답 키가 로그 종류마다 다르므로(:key 에 따라 qlCoinLogs/guildActions/guildPoints)
  * 그 키를 직접 꺼내 통일된 배열로 반환한다.
  *
- * 재화 로그(gmTiket/qlCoin)는 createdBy 로 "누가" 조작했는지 추적 가능 → 운영 감사 핵심.
+ * QL 코인 로그는 createdBy 로 "누가" 조작했는지 추적 가능 → 운영 감사 핵심.
  */
 import { api, buildQuery } from './api';
 import type { CurrencyLog, LogFilter } from '../types/log';
@@ -22,12 +21,6 @@ export const logApi = {
     api
       .get<{ qlCoinLogs: CurrencyLog[] }>(`/api/admin/logs/qlCoin${buildQuery({ ...filter })}`)
       .then((r) => r.qlCoinLogs),
-
-  /** GM 티켓 로그. */
-  gmTiket: (filter: LogFilter = {}) =>
-    api
-      .get<{ gmTiketLogs: CurrencyLog[] }>(`/api/admin/logs/gmTiket${buildQuery({ ...filter })}`)
-      .then((r) => r.gmTiketLogs),
 
   guildActions: (filter: LogFilter = {}) =>
     api

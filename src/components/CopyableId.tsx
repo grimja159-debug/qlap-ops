@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { shortId } from '../lib/format';
 
 /**
@@ -12,7 +12,7 @@ interface CopyableIdProps {
   full?: boolean;
 }
 
-export function CopyableId({ value, full }: CopyableIdProps) {
+export const CopyableId = memo(function CopyableId({ value, full }: CopyableIdProps) {
   const [copied, setCopied] = useState(false);
 
   if (!value) return <span className="text-zinc-600">–</span>;
@@ -38,4 +38,4 @@ export function CopyableId({ value, full }: CopyableIdProps) {
       {copied && <span className="ml-1 text-emerald-400">복사됨</span>}
     </button>
   );
-}
+});

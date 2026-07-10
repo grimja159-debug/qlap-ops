@@ -1,27 +1,76 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useEffect, useMemo, useState } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
+import { getRedirectResult, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAuth } from '../contexts/auth';
 
+const LOGIN_NEXT_STORAGE_KEY = 'qlap_ops_login_next';
+
+function safeNextPath(value: string | null): string {
+  if (!value || !value.startsWith('/admin')) return '/admin';
+  return value;
+}
+
+function shouldFallbackToRedirect(error: unknown): boolean {
+  if (typeof error !== 'object' || error == null || !('code' in error)) return false;
+  const code = String((error as { code?: unknown }).code);
+  return code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request';
+}
+
+function formatAuthError(error: unknown, fallback: string): string {
+  if (typeof error === 'object' && error != null && 'code' in error) {
+    const code = String((error as { code?: unknown }).code);
+    const message = error instanceof Error ? error.message : fallback;
+    return `${code}: ${message}`;
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const nextPath = useMemo(
+    () => safeNextPath(searchParams.get('next') ?? window.sessionStorage.getItem(LOGIN_NEXT_STORAGE_KEY)),
+    [searchParams],
+  );
+
+  useEffect(() => {
+    void getRedirectResult(auth).catch((e) => {
+      setError(formatAuthError(e, '로그인 결과를 확인하지 못했습니다.'));
+      setSigningIn(false);
+    });
+  }, []);
 
   if (!isLoading && isAuthenticated) {
-    return <Navigate to="/admin" replace />;
+    window.sessionStorage.removeItem(LOGIN_NEXT_STORAGE_KEY);
+    return <Navigate to={nextPath} replace />;
   }
 
   const handleGoogleSignIn = async () => {
     setError(null);
     setSigningIn(true);
+
     try {
       const provider = new GoogleAuthProvider();
+      window.sessionStorage.setItem(LOGIN_NEXT_STORAGE_KEY, nextPath);
       await signInWithPopup(auth, provider);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : '로그인에 실패했습니다.';
-      setError(msg);
+      if (shouldFallbackToRedirect(e)) {
+        try {
+          const provider = new GoogleAuthProvider();
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError) {
+          setError(formatAuthError(redirectError, '로그인에 실패했습니다.'));
+          setSigningIn(false);
+          return;
+        }
+      }
+
+      setError(formatAuthError(e, '로그인에 실패했습니다.'));
       setSigningIn(false);
     }
   };
@@ -34,13 +83,13 @@ export function LoginPage() {
             <span className="text-violet-400 font-bold text-2xl">QLap</span>
             <span className="text-xs bg-violet-600 text-white px-1.5 py-0.5 rounded font-medium">OPS</span>
           </div>
-          <p className="text-zinc-500 text-sm">운영자 콘솔 — 인가된 사용자 전용</p>
+          <p className="text-zinc-500 text-sm">운영 콘솔 - 관리자 계정 전용</p>
         </div>
 
         <div className="rounded-lg border border-zinc-700/60 bg-zinc-900 p-6 flex flex-col gap-4">
           <div>
             <h1 className="text-zinc-200 font-semibold text-base">로그인</h1>
-            <p className="text-zinc-500 text-xs mt-0.5">QLapGG 운영자 계정으로 로그인하세요</p>
+            <p className="text-zinc-500 text-xs mt-0.5">QLapGG 운영자 계정으로 로그인하세요.</p>
           </div>
 
           <button
@@ -65,7 +114,7 @@ export function LoginPage() {
           )}
 
           <p className="text-xs text-zinc-600 text-center">
-            운영자 이상 권한 계정만 접근할 수 있습니다.
+            운영 권한이 있는 계정만 접근할 수 있습니다.
           </p>
         </div>
       </div>

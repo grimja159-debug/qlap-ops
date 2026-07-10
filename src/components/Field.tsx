@@ -37,8 +37,9 @@ interface TextFieldProps {
   hint?: string;
   required?: boolean;
   disabled?: boolean;
-  type?: 'text' | 'datetime-local' | 'email';
+  type?: 'text' | 'datetime-local' | 'email' | 'password';
   list?: string;
+  maxLength?: number;
   className?: string;
 }
 
@@ -52,6 +53,7 @@ export function TextField({
   disabled,
   type = 'text',
   list,
+  maxLength,
   className,
 }: TextFieldProps) {
   return (
@@ -60,6 +62,7 @@ export function TextField({
         type={type}
         value={value}
         list={list}
+        maxLength={maxLength}
         disabled={disabled}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
@@ -160,6 +163,7 @@ interface TextAreaFieldProps {
   placeholder?: string;
   hint?: string;
   required?: boolean;
+  maxLength?: number;
   className?: string;
 }
 
@@ -171,6 +175,7 @@ export function TextAreaField({
   placeholder,
   hint,
   required,
+  maxLength,
   className,
 }: TextAreaFieldProps) {
   return (
@@ -178,6 +183,7 @@ export function TextAreaField({
       <textarea
         value={value}
         rows={rows}
+        maxLength={maxLength}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={clsx(INPUT_CLASS, 'resize-none')}
