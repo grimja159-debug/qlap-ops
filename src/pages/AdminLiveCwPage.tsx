@@ -1855,6 +1855,27 @@ function RewardMonitorPanel({
   const writeWorkerInterval = typeof latestWriteWorker.intervalSeconds === 'number' ? latestWriteWorker.intervalSeconds : null;
   const writeWorkerChecked = typeof latestWriteWorker.checked === 'number' ? latestWriteWorker.checked : null;
   const writeWorkerFinalized = typeof latestWriteWorker.finalized === 'number' ? latestWriteWorker.finalized : null;
+  const writeWorkerSkipped = typeof latestWriteWorker.skipped === 'number' ? latestWriteWorker.skipped : null;
+  const writeWorkerMaxLimit = typeof latestWriteWorker.maxBulkWriteLimit === 'number' ? latestWriteWorker.maxBulkWriteLimit : null;
+  const writeWorkerBlockedBulk = latestWriteWorker.blockedBulkWrite === true;
+  const writeWorkerSource = stringOf(latestWriteWorker.source) ?? '-';
+  const writeWorkerBudgetStatus = stringOf(latestWriteWorker.budgetStatus);
+  const writeWorkerCandidatePosture =
+    writeWorkerChecked === 0
+      ? 'candidate 0'
+      : writeWorkerFinalized && writeWorkerFinalized > 0
+        ? `${formatNumber(writeWorkerFinalized)} finalized`
+        : writeWorkerSkipped && writeWorkerSkipped > 0
+          ? `${formatNumber(writeWorkerSkipped)} skipped`
+          : 'candidate unknown';
+  const writeWorkerSafetyOk =
+    writeWorkerMode === 'write' &&
+    writeWorkerAllowBulk &&
+    Boolean(writeWorkerCutoff) &&
+    writeWorkerSource === 'server-db' &&
+    typeof writeWorkerMaxLimit === 'number' &&
+    writeWorkerMaxLimit <= 5 &&
+    !writeWorkerBlockedBulk;
   const serverDbWorkerHealth = monitor.worker.serverDbHealth ?? [];
   const firstOperationChecks = [
     {
@@ -2135,21 +2156,36 @@ function RewardMonitorPanel({
 
       <Panel title="auto-finalize write worker state">
         <div className="flex flex-wrap gap-2">
-          <StatusBadge label="prepared write worker" tone="neutral" />
+          <StatusBadge label={writeWorkerSafetyOk ? 'write worker guarded' : 'write worker check'} tone={writeWorkerSafetyOk ? 'success' : 'warning'} />
           <StatusBadge label={`current ${writeWorkerMode}`} tone={writeWorkerDryRun ? 'success' : 'warning'} />
           <StatusBadge label={`bulk ${writeWorkerAllowBulk ? 'enabled' : 'disabled'}`} tone={writeWorkerAllowBulk ? 'warning' : 'success'} />
+          <StatusBadge label={`source ${writeWorkerSource}`} tone={writeWorkerSource === 'server-db' ? 'success' : 'danger'} />
           <StatusBadge label={`interval ${writeWorkerInterval ? `${writeWorkerInterval}s` : '-'}`} tone="neutral" />
+          <StatusBadge label={`max ${formatNumber(writeWorkerMaxLimit)}`} tone={writeWorkerMaxLimit && writeWorkerMaxLimit <= 5 ? 'success' : 'warning'} />
           <StatusBadge label={`checked ${formatNumber(writeWorkerChecked)}`} tone="neutral" />
-          <StatusBadge label={`finalized ${formatNumber(writeWorkerFinalized)}`} tone={writeWorkerFinalized && writeWorkerFinalized > 0 && !writeWorkerDryRun ? 'warning' : 'neutral'} />
+          <StatusBadge label={writeWorkerCandidatePosture} tone={writeWorkerFinalized && writeWorkerFinalized > 0 && !writeWorkerDryRun ? 'warning' : writeWorkerChecked === 0 ? 'success' : 'neutral'} />
+          {writeWorkerBudgetStatus ? <StatusBadge label={`budget ${writeWorkerBudgetStatus}`} tone={writeWorkerBudgetStatus === 'OK' ? 'success' : 'warning'} /> : null}
+          {writeWorkerBlockedBulk ? <StatusBadge label="blocked bulk" tone="danger" /> : null}
         </div>
-        <p className="mt-2 text-xs text-zinc-500">
-          PM2 process name includes "write" because the production write profile is prepared. The effective mode is taken from the latest worker log. When this shows current dry-run and bulk disabled, it is not finalizing rooms or issuing rewards.
-        </p>
+        {writeWorkerMode === 'write' && writeWorkerAllowBulk ? (
+          <p className="mt-2 text-xs text-amber-200">
+            운영 write worker가 켜져 있습니다. 최근 로그 기준으로 cutoff, max limit, server-db source가 함께 표시될 때만 안전한 상태입니다. 후보가 0이면 이번 cycle에서 확정/지급한 방이 없습니다.
+          </p>
+        ) : (
+          <p className="mt-2 text-xs text-zinc-500">
+            PM2 process name includes "write" because the production write profile is prepared. The effective mode is taken from the latest worker log. When this shows current dry-run and bulk disabled, it is not finalizing rooms or issuing rewards.
+          </p>
+        )}
         {writeWorkerCutoff ? (
           <p className="mt-1 font-mono text-[11px] text-zinc-500">minSubmittedAt cutoff {writeWorkerCutoff}</p>
         ) : (
           <p className="mt-1 text-xs text-amber-300">No cutoff was found in the latest worker log. Do not enable bulk write without a cutoff.</p>
         )}
+        {!writeWorkerSafetyOk && writeWorkerMode === 'write' ? (
+          <p className="mt-1 text-xs text-red-300">
+            Write worker safety posture is incomplete. Check source, cutoff, max bulk limit, and blockedBulkWrite before trusting automatic payouts.
+          </p>
+        ) : null}
       </Panel>
 
       <Panel title="Server DB worker health">
