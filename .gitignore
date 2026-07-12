@@ -46,3 +46,13 @@ npm-debug.log*
 
 .claude/
 .playwright-mcp/
+
+# Local/generated operator reports from manual test rehearsals
+QLAP*_REPORT_*.md
+QLAP*_VERIFY_*.md
+QLAP*_ALIGNMENT_*.md
+QLAP*_SECURITY_BOUNDARY_REPORT_*.md
+
+# This app is npm/package-lock based; ignore accidental pnpm workspace artifacts.
+pnpm-lock.yaml
+pnpm-workspace.yaml
