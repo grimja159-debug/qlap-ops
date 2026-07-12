@@ -113,6 +113,7 @@ if (missingLiveCwApiPaths.length === 0) {
 await expectJsonOk('Services health via gateway', `${localGatewayBaseUrl}/services/api/health`, (body) => body?.ok === true);
 await expectJsonOk('ROFL health via gateway', `${localGatewayBaseUrl}/rofl/api/health`, (body) => body?.ok === true);
 await expectJsonOk('Guild health via gateway', `${localGatewayBaseUrl}/guild/api/health`, (body) => body?.ok === true);
+await expectJsonOk('Billing health via gateway', `${localGatewayBaseUrl}/api/billing/health`, (body) => body?.ok === true);
 await expectStatus('ROFL admin Live CW guard via gateway', `${localGatewayBaseUrl}/rofl/api/admin/live-cw/discord/servers`, 401);
 await expectStatus('Services admin users guard via gateway', `${localGatewayBaseUrl}/services/api/admin/users?limit=1`, 401);
 
