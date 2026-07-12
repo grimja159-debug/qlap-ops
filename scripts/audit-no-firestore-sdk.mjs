@@ -21,6 +21,8 @@ const FORBIDDEN_PATTERNS = [
   { pattern: /firebase\/compat\/firestore/g, reason: "Firestore compat SDK usage" },
   { pattern: /firebase\/compat\/database/g, reason: "Realtime Database compat SDK usage" },
   { pattern: /\bonSnapshot\s*\(/g, reason: "Realtime Firestore listener-like call" },
+  { pattern: /\bgetFirestore\s*\(/g, reason: "Firestore client initialization-like call" },
+  { pattern: /\binitializeFirestore\s*\(/g, reason: "Firestore client initialization-like call" },
   { pattern: /\bgetDoc\s*\(/g, reason: "Firestore document read-like call" },
   { pattern: /\bgetDocs\s*\(/g, reason: "Firestore collection read-like call" },
   { pattern: /\bcollection\s*\(/g, reason: "Firestore collection-like call" },

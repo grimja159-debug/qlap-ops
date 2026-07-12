@@ -1,8 +1,8 @@
-import { normalizeGatewayApiBase } from './apiBase';
+import { gatewayLocalFallback, getDevOnlyEnvValue, normalizeGatewayApiBase } from './apiBase';
 
 const BASE_URL = normalizeGatewayApiBase(
-  import.meta.env.VITE_QLAP_SERVICES_API_BASE_URL,
-  'http://localhost:8080/services',
+  getDevOnlyEnvValue(['VITE', 'QLAP', 'SERVICES', 'API', 'BASE', 'URL']),
+  gatewayLocalFallback('services'),
   'services',
   ['6100'],
 );

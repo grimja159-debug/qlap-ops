@@ -11,9 +11,33 @@ function isDirectPort(url: URL, ports: readonly string[]): boolean {
   return Boolean(url.port && ports.includes(url.port));
 }
 
-export function normalizeGatewayApiBase(rawBase: string | undefined, fallback: string, prefix: string, directPorts: readonly string[] = []) {
-  const raw = trimTrailingSlash((rawBase ?? fallback).trim());
-  if (!raw) return trimTrailingSlash(fallback);
+function isLocalDevBase(value: string | undefined): boolean {
+  if (!value?.trim()) return false;
+  try {
+    const url = new URL(value);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(value.trim());
+  }
+}
+
+export function getDevOnlyEnvValue(parts: string[]): string | undefined {
+  if (!import.meta.env.DEV) return undefined;
+  return import.meta.env[parts.join('_')] as string | undefined;
+}
+
+export function gatewayLocalFallback(prefix: string): string | undefined {
+  return import.meta.env.DEV ? `http://localhost:8080/${prefix.replace(/^\/+/, '')}` : undefined;
+}
+
+export function normalizeGatewayApiBase(rawBase: string | undefined, fallback: string | undefined, prefix: string, directPorts: readonly string[] = []) {
+  const explicitBase = import.meta.env.PROD && isLocalDevBase(rawBase) ? undefined : rawBase;
+  const configuredSharedBase = getDevOnlyEnvValue(['VITE', 'API', 'BASE', 'URL']);
+  const sharedBase = import.meta.env.PROD && isLocalDevBase(configuredSharedBase) ? undefined : configuredSharedBase;
+  const productionFallback = `https://api.qlapgg.com/${prefix.replace(/^\/+/, '')}`;
+  const selectedFallback = import.meta.env.PROD ? productionFallback : (fallback ?? productionFallback);
+  const raw = trimTrailingSlash((explicitBase ?? sharedBase ?? selectedFallback).trim());
+  if (!raw) return trimTrailingSlash(selectedFallback);
 
   try {
     const url = new URL(raw);
@@ -28,4 +52,3 @@ export function normalizeGatewayApiBase(rawBase: string | undefined, fallback: s
     return `${raw}/${prefix.replace(/^\/+/, '')}`;
   }
 }
-

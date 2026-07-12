@@ -1,6 +1,6 @@
 import { auth } from '../lib/firebase';
 import { ApiError, buildQuery } from './api';
-import { normalizeGatewayApiBase } from './apiBase';
+import { gatewayLocalFallback, getDevOnlyEnvValue, normalizeGatewayApiBase } from './apiBase';
 import type {
   AdminLiveCwAdminActionResult,
   AdminLiveCwArchiveSummary,
@@ -19,8 +19,8 @@ import type {
 } from '../types/liveCw';
 
 const BASE_URL = normalizeGatewayApiBase(
-  import.meta.env.VITE_ROFL_API_BASE_URL,
-  'http://localhost:8080/rofl',
+  getDevOnlyEnvValue(['VITE', 'ROFL', 'API', 'BASE', 'URL']),
+  gatewayLocalFallback('rofl'),
   'rofl',
   ['4500'],
 );

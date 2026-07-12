@@ -16,13 +16,13 @@
  * 변경 계열은 2026-06-03 QLapServices guildRoutes 에 추가되었다(super_admin 전용).
  */
 import { ApiError, api, buildQuery, getAuthToken } from './api';
-import { normalizeGatewayApiBase } from './apiBase';
+import { gatewayLocalFallback, getDevOnlyEnvValue, normalizeGatewayApiBase } from './apiBase';
 import type { GuildStatus, GuildMemberRole } from '../lib/constants';
 import type { Guild, GuildMember, GuildLogs } from '../types/guild';
 
 const GUILD_CORE_BASE_URL = normalizeGatewayApiBase(
-  import.meta.env.VITE_QLAP_GUILD_API_BASE_URL,
-  'http://localhost:8080/guild',
+  getDevOnlyEnvValue(['VITE', 'QLAP', 'GUILD', 'API', 'BASE', 'URL']),
+  gatewayLocalFallback('guild'),
   'guild',
   ['4200'],
 );

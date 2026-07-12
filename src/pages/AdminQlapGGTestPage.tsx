@@ -22,7 +22,8 @@ import type {
 } from '../types/testLab';
 
 const QLAPGG_BASE_URL = (
-  (import.meta.env.VITE_QLAPGG_FRONTEND_BASE_URL as string | undefined) ?? 'http://localhost:5173'
+  (import.meta.env.DEV ? (import.meta.env.VITE_QLAPGG_FRONTEND_BASE_URL as string | undefined) : undefined) ??
+  (import.meta.env.DEV ? 'http://localhost:5173' : 'https://qlapgg.com')
 ).replace(/\/+$/, '');
 const DEFAULT_RETURN_TO = '/guild';
 const EMPTY_USERS: TestUser[] = [];

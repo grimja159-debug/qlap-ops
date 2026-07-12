@@ -2,16 +2,20 @@ import { useMemo, useState } from 'react';
 import { SelectField, TextField } from '../components/Field';
 import { InlineMessage } from '../components/InlineMessage';
 import { PageSection } from '../components/PageSection';
+import { getDevOnlyEnvValue } from '../services/apiBase';
 
 const MOCK_API_BASE_URL = (
-  (import.meta.env.VITE_QLAP_MOCK_API_BASE_URL as string | undefined) ?? 'http://127.0.0.1:6300'
+  getDevOnlyEnvValue(['VITE', 'QLAP', 'MOCK', 'API', 'BASE', 'URL']) ??
+  (import.meta.env.DEV ? 'http://127.0.0.1:6300' : 'https://api.qlapgg.com/mock')
 ).replace(/\/+$/, '');
 
 const QLAPGG_FRONTEND_BASE_URL = (
-  (import.meta.env.VITE_QLAPGG_FRONTEND_MOCK_URL as string | undefined) ??
-  (import.meta.env.VITE_QLAPGG_FRONTEND_BASE_URL as string | undefined) ??
-  'http://127.0.0.1:5174'
+  getDevOnlyEnvValue(['VITE', 'QLAPGG', 'FRONTEND', 'MOCK', 'URL']) ??
+  getDevOnlyEnvValue(['VITE', 'QLAPGG', 'FRONTEND', 'BASE', 'URL']) ??
+  (import.meta.env.DEV ? 'http://127.0.0.1:5174' : 'https://qlapgg.com')
 ).replace(/\/+$/, '');
+
+const mockApiHint = import.meta.env.DEV ? '기본값: http://127.0.0.1:6300' : '운영 번들 기본값: https://api.qlapgg.com/mock';
 
 const SCENARIOS = [
   { value: 'free-user', label: 'free-user' },
@@ -114,7 +118,7 @@ export function AdminFrontendTestPage() {
             label="Mock API base URL"
             value={mockApiBaseUrl}
             onChange={setMockApiBaseUrl}
-            hint="기본값: http://127.0.0.1:6300"
+            hint={mockApiHint}
           />
           <TextField
             label="QLapGG frontend URL"
@@ -161,13 +165,13 @@ export function AdminFrontendTestPage() {
         <div className="grid gap-3 text-sm text-zinc-300 md:grid-cols-2">
           <div className="rounded border border-zinc-700 bg-zinc-900/50 p-3">
             <p className="font-semibold text-zinc-200">Mock API</p>
-            <p className="mt-2 font-mono text-xs text-zinc-500">cd /d "E:\test server\QLapMock API"</p>
+            <p className="mt-2 font-mono text-xs text-zinc-500">cd /d "%QLAP_DATA_ROOT%\tools\QLapMock API"</p>
             <p className="font-mono text-xs text-zinc-500">npm.cmd run dev</p>
           </div>
           <div className="rounded border border-zinc-700 bg-zinc-900/50 p-3">
             <p className="font-semibold text-zinc-200">QLapGG frontend</p>
-            <p className="mt-2 font-mono text-xs text-zinc-500">$env:VITE_API_BASE_URL='http://127.0.0.1:6300'</p>
-            <p className="font-mono text-xs text-zinc-500">pnpm dev --host 127.0.0.1 --port 5174</p>
+            <p className="mt-2 font-mono text-xs text-zinc-500">$env:VITE_API_BASE_URL='http://localhost:6300'</p>
+            <p className="font-mono text-xs text-zinc-500">pnpm dev --host localhost --port 5174</p>
           </div>
         </div>
         <p className="mt-3 text-xs text-zinc-500">

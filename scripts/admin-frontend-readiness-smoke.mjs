@@ -3,8 +3,32 @@ import { join, resolve } from 'node:path';
 
 const repoRoot = process.cwd();
 const envPath = resolve(repoRoot, '.env');
+const distDir = join(repoRoot, 'dist');
 const localGatewayBaseUrl = trimTrailingSlash(process.env.QLAP_OPS_GATEWAY_BASE_URL || 'http://127.0.0.1:8080');
 const localOpsBaseUrl = trimTrailingSlash(process.env.QLAP_OPS_FRONTEND_BASE_URL || 'http://127.0.0.1:5173');
+const forbiddenApiEnvNames = [
+  'VITE_GSS_API_BASE_URL',
+  'VITE_QLAP_SERVICES_API_BASE_URL',
+  'VITE_QLAP_GUILD_API_BASE_URL',
+  'VITE_TOURNAMENT_API_BASE_URL',
+  'VITE_ROFL_API_BASE_URL',
+  'VITE_QLAP_MOCK_API_BASE_URL',
+];
+const forbiddenGatewayTokens = [
+  'ngrok-free.dev',
+  'bleach-unshipped',
+  'localhost:6100',
+  'localhost:4500',
+  'localhost:4200',
+  'localhost:4300',
+  'localhost:4700',
+  '127.0.0.1:6100',
+  '127.0.0.1:4500',
+  '127.0.0.1:4200',
+  '127.0.0.1:4300',
+  '127.0.0.1:4700',
+  ...forbiddenApiEnvNames,
+];
 
 const checks = [];
 const add = (status, name, detail = '') => {
@@ -23,31 +47,12 @@ console.log(`gateway=${localGatewayBaseUrl}`);
 console.log(`opsFrontend=${localOpsBaseUrl}`);
 
 const env = existsSync(envPath) ? parseEnv(readFileSync(envPath, 'utf8')) : new Map();
-if (env.has('VITE_QLAP_SERVICES_API_BASE_URL')) {
-  const value = env.get('VITE_QLAP_SERVICES_API_BASE_URL') || '';
-  add(
-    value.includes('8080/services') ? 'PASS' : 'WARN',
-    'Services API env',
-    redactUrl(value),
-  );
-} else {
-  add('WARN', 'Services API env', 'not set; code fallback should use localhost:8080/services');
-}
-
-if (env.has('VITE_TOURNAMENT_API_BASE_URL')) {
-  const value = env.get('VITE_TOURNAMENT_API_BASE_URL') || '';
-  add(
-    value.includes('8080/tournament') ? 'PASS' : 'WARN',
-    'Tournament API env',
-    redactUrl(value),
-  );
-} else {
-  add('WARN', 'Tournament API env', 'not set; code fallback should use localhost:8080/tournament');
-}
+const apiBase = env.get('VITE_API_BASE_URL') || '(source-fallback)';
+add('PASS', 'shared API gateway configuration', redactUrl(apiBase));
 
 const envForbidden = [...env.entries()]
   .filter(([name]) => /^VITE_/.test(name))
-  .filter(([, value]) => /ngrok-free\.dev|bleach-unshipped|localhost:(6100|4500|4200|4300|4700)|127\.0\.0\.1:(6100|4500|4200|4300|4700)/i.test(value || ''));
+  .filter(([name, value]) => forbiddenApiEnvNames.includes(name) || hasForbiddenGatewayToken(value || ''));
 if (envForbidden.length === 0) {
   add('PASS', 'forbidden direct/proxy env absent', '-');
 } else {
@@ -62,6 +67,26 @@ if (forbiddenSourceFound.length === 0) {
   add('PASS', 'forbidden source gateway tokens absent', '-');
 } else {
   add('FAIL', 'forbidden source gateway tokens absent', forbiddenSourceFound.join(', '));
+}
+
+const forbiddenApiEnvSourceFound = forbiddenApiEnvNames.filter((token) => sourceText.includes(token));
+if (forbiddenApiEnvSourceFound.length === 0) {
+  add('PASS', 'forbidden per-service env names absent from app source', '-');
+} else {
+  add('FAIL', 'forbidden per-service env names absent from app source', forbiddenApiEnvSourceFound.join(', '));
+}
+
+const distFiles = existsSync(distDir) ? listFiles(distDir).filter((file) => /\.(js|css|html)$/.test(file)) : [];
+if (distFiles.length === 0) {
+  add('WARN', 'dist bundle scan', 'dist not found; run npm run build for bundle-level token scan');
+} else {
+  const distText = distFiles.map((file) => readFileSync(file, 'utf8')).join('\n');
+  const forbiddenDistFound = forbiddenGatewayTokens.filter((token) => distText.includes(token));
+  if (forbiddenDistFound.length === 0) {
+    add('PASS', 'forbidden gateway tokens absent from dist', `${distFiles.length} file(s)`);
+  } else {
+    add('FAIL', 'forbidden gateway tokens absent from dist', forbiddenDistFound.join(', '));
+  }
 }
 
 const requiredRoutes = ['/admin/live-cw', '/admin/users', '/admin/access', '/admin/db-inspector'];
@@ -112,6 +137,7 @@ console.log(JSON.stringify({
   gateway: localGatewayBaseUrl,
   opsFrontend: localOpsBaseUrl,
   checkedSourceFiles: sourceFiles.length,
+  checkedDistFiles: distFiles.length,
   note: 'No Authorization token is used or printed by this smoke.',
 }, null, 2));
 
@@ -198,4 +224,8 @@ function trimTrailingSlash(value) {
 
 function redactUrl(value) {
   return String(value || '').replace(/([?&](?:token|key|secret)=)[^&]+/gi, '$1[REDACTED]');
+}
+
+function hasForbiddenGatewayToken(value) {
+  return forbiddenGatewayTokens.some((token) => String(value || '').includes(token));
 }

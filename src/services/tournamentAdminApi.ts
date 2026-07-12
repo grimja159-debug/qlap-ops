@@ -1,6 +1,6 @@
 import { auth } from '../lib/firebase';
 import { ApiError, buildQuery } from './api';
-import { normalizeGatewayApiBase } from './apiBase';
+import { gatewayLocalFallback, getDevOnlyEnvValue, normalizeGatewayApiBase } from './apiBase';
 import type {
   BracketType,
   EntryRequirement,
@@ -16,8 +16,8 @@ import type {
 } from '../types/tournament';
 
 const BASE_URL = normalizeGatewayApiBase(
-  import.meta.env.VITE_TOURNAMENT_API_BASE_URL,
-  'http://localhost:8080/tournament',
+  getDevOnlyEnvValue(['VITE', 'TOURNAMENT', 'API', 'BASE', 'URL']),
+  gatewayLocalFallback('tournament'),
   'tournament',
   ['4300'],
 );
