@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "preinstall": "node scripts/ensure-npm-install.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "audit:firestore-sdk": "node scripts/audit-no-firestore-sdk.mjs",
@@ -38,5 +39,6 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"
-  }
+  },
+  "packageManager": "npm@11.12.1"
 }
