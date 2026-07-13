@@ -308,7 +308,7 @@ function BillingMonitorPanel({
   return (
     <PageSection
       title="Billing Webhook / Outbox Monitor"
-      description="Server DB 결제 projection, Toss webhook 이벤트, Firestore mirror outbox를 읽기 전용으로 확인합니다."
+      description="Server DB 결제 projection과 Toss webhook 이벤트를 확인합니다. legacy mirror outbox는 읽기 전용 진단이며 Firestore 쓰기를 실행하지 않습니다."
       right={
         <button type="button" onClick={onRefresh} className="text-xs px-2.5 py-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700">
           새로고침
@@ -338,8 +338,8 @@ function BillingMonitorPanel({
                 ['payments', monitor.summary.paymentsTotal],
                 ['events', monitor.summary.eventsTotal],
                 ['grant ledger', monitor.summary.grantLedgerTotal],
-                ['outbox', monitor.summary.outboxTotal],
-                ['pending/failed', monitor.summary.outboxPendingOrFailed],
+                ['legacy outbox', monitor.summary.outboxTotal],
+                ['legacy pending/failed', monitor.summary.outboxPendingOrFailed],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-md border border-zinc-800 bg-zinc-950/60 p-3">
                   <p className="text-[11px] text-zinc-500">{label}</p>
@@ -358,9 +358,9 @@ function BillingMonitorPanel({
                 <StatusCountChips rows={monitor.paymentsByStatus} />
               </div>
               <div className="rounded-md border border-zinc-800 bg-zinc-950/40 p-3">
-                <p className="mb-2 text-xs font-medium text-zinc-300">Mirror outbox 상태</p>
+                <p className="mb-2 text-xs font-medium text-zinc-300">Legacy mirror outbox 상태</p>
                 <StatusCountChips rows={monitor.outboxByStatus} />
-                <p className="mt-2 text-[11px] text-zinc-500">가장 오래된 대기: {secondsLabel(monitor.summary.oldestPendingOutboxAgeSeconds)}</p>
+                <p className="mt-2 text-[11px] text-zinc-500">읽기 전용 진단 · 가장 오래된 대기: {secondsLabel(monitor.summary.oldestPendingOutboxAgeSeconds)}</p>
               </div>
             </div>
 
@@ -388,7 +388,7 @@ function BillingMonitorPanel({
                 ]}
                 data={monitor.recentOutbox}
                 rowKey={(r) => String(r.outboxId)}
-                emptyMessage="최근 billing mirror outbox가 없습니다"
+                emptyMessage="최근 legacy billing mirror outbox가 없습니다"
               />
             </div>
 
