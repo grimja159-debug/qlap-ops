@@ -196,7 +196,7 @@ async function expectStatus(name, url, expectedStatus) {
 
 async function request(url) {
   try {
-    const response = await fetch(url, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+    const response = await fetch(url);
     const text = await response.text();
     let body = null;
     try {
