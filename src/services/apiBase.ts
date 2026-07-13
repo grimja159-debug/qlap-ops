@@ -26,13 +26,17 @@ export function getDevOnlyEnvValue(parts: string[]): string | undefined {
   return import.meta.env[parts.join('_')] as string | undefined;
 }
 
+function getSharedApiBaseEnvValue(): string | undefined {
+  return import.meta.env.VITE_API_BASE_URL as string | undefined;
+}
+
 export function gatewayLocalFallback(prefix: string): string | undefined {
   return import.meta.env.DEV ? `http://localhost:8080/${prefix.replace(/^\/+/, '')}` : undefined;
 }
 
 export function normalizeGatewayApiBase(rawBase: string | undefined, fallback: string | undefined, prefix: string, directPorts: readonly string[] = []) {
   const explicitBase = import.meta.env.PROD && isLocalDevBase(rawBase) ? undefined : rawBase;
-  const configuredSharedBase = getDevOnlyEnvValue(['VITE', 'API', 'BASE', 'URL']);
+  const configuredSharedBase = getSharedApiBaseEnvValue();
   const sharedBase = import.meta.env.PROD && isLocalDevBase(configuredSharedBase) ? undefined : configuredSharedBase;
   const productionFallback = `https://api.qlapgg.com/${prefix.replace(/^\/+/, '')}`;
   const selectedFallback = import.meta.env.PROD ? productionFallback : (fallback ?? productionFallback);

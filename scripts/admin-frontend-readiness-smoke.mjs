@@ -6,6 +6,7 @@ const envPath = resolve(repoRoot, '.env');
 const distDir = join(repoRoot, 'dist');
 const localGatewayBaseUrl = trimTrailingSlash(process.env.QLAP_OPS_GATEWAY_BASE_URL || 'http://127.0.0.1:8080');
 const localOpsBaseUrl = trimTrailingSlash(process.env.QLAP_OPS_FRONTEND_BASE_URL || 'http://127.0.0.1:5173');
+const expectedProductionApiBaseUrl = trimTrailingSlash(process.env.QLAP_OPS_PRODUCTION_API_BASE_URL || 'https://api.qlapgg.com');
 const forbiddenApiEnvNames = [
   'VITE_GSS_API_BASE_URL',
   'VITE_QLAP_SERVICES_API_BASE_URL',
@@ -45,6 +46,7 @@ console.log('[qlap-ops-admin-frontend-readiness-smoke] start');
 console.log(`repo=${repoRoot}`);
 console.log(`gateway=${localGatewayBaseUrl}`);
 console.log(`opsFrontend=${localOpsBaseUrl}`);
+console.log(`expectedProductionApi=${expectedProductionApiBaseUrl}`);
 
 const env = existsSync(envPath) ? parseEnv(readFileSync(envPath, 'utf8')) : new Map();
 const apiBase = env.get('VITE_API_BASE_URL') || '(source-fallback)';
@@ -86,6 +88,12 @@ if (distFiles.length === 0) {
     add('PASS', 'forbidden gateway tokens absent from dist', `${distFiles.length} file(s)`);
   } else {
     add('FAIL', 'forbidden gateway tokens absent from dist', forbiddenDistFound.join(', '));
+  }
+
+  if (distText.includes(expectedProductionApiBaseUrl)) {
+    add('PASS', 'production API gateway embedded in dist', expectedProductionApiBaseUrl);
+  } else {
+    add('FAIL', 'production API gateway embedded in dist', `${expectedProductionApiBaseUrl} not found`);
   }
 }
 

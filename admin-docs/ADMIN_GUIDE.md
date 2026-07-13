@@ -34,17 +34,16 @@ npm run preview  # 빌드 결과 미리보기
 
 | 변수 | 설명 |
 |---|---|
-| `VITE_QLAP_SERVICES_API_BASE_URL` | QLapServices API 베이스 URL. 기본 `http://localhost:8080/services` |
+| `VITE_API_BASE_URL` | 운영 API 게이트웨이 루트. 기본 소스 fallback은 `https://api.qlapgg.com` |
 | `VITE_FIREBASE_*` | Firebase 웹앱 설정(apiKey, authDomain, projectId 등) |
 
 > **왜 베이스 URL이 하나뿐인가?**
-> nginx(`PROJECT_SERVER_BACKEND/nginx/conf/nginx.conf`)가 외부로 프록시하는 경로는
-> `/gss/`, `/las/`, `/services/` 뿐이다. `/services/` 는 QLapServices(포트 6000)로 연결된다.
-> QLapGuild API 등 다른 서비스는 외부 노출이 없어 콘솔에서 **도달할 수 없다.**
-> 그래서 콘솔의 백엔드는 사실상 QLapServices 하나다.
+> Cloudflare Tunnel은 `https://api.qlapgg.com`을 로컬 nginx 게이트웨이로 연결하고,
+> nginx가 `/services`, `/rofl`, `/guild`, `/tournament`, `/billing`, `/gss` prefix를 각 백엔드로 프록시한다.
+> 운영에서는 `VITE_QLAP_SERVICES_API_BASE_URL`, `VITE_ROFL_API_BASE_URL` 같은 서비스별 env를 쓰지 않는다.
 
-경로 매핑 예: 콘솔이 `/api/admin/users` 호출 → 실제 `http://localhost:8080/services/api/admin/users`
-→ nginx → `http://127.0.0.1:6000/api/admin/users`.
+경로 매핑 예: 콘솔이 `/api/admin/users` 호출 → 실제 `https://api.qlapgg.com/services/api/admin/users`
+→ Cloudflare Tunnel → nginx → QLapServices.
 
 ---
 
