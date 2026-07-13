@@ -309,7 +309,7 @@ export function AdminDbInspectorPage() {
     <div className="flex max-w-7xl flex-col gap-5">
       <PageSection
         title="DB / XML 보기"
-        description="서버 DB에 저장된 유저, 코인, 멸망전 데이터를 표와 XML로 쉽게 확인합니다. 수정은 하지 않는 읽기 전용 관리자 도구입니다."
+        description="서버 DB에 저장된 유저, 코인, 멸망전 데이터를 표와 XML로 쉽게 확인합니다. legacy mirror outbox는 진단용이며, 이 화면은 수정이나 Firestore write를 하지 않습니다."
         right={
           <button
             type="button"
