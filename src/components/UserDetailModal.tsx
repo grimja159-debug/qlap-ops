@@ -641,19 +641,19 @@ function UserDataDiagnosticsPanel({
                   </button>
                   <ConfirmButton
                     tone="primary"
-                    confirmLabel="mirror retry write"
+                    confirmLabel="outbox reset write"
                     disabled={mirrorRetryPending}
                     onConfirm={onMirrorRetryWrite}
                   >
-                    retry write
+                    outbox reset
                   </ConfirmButton>
                 </div>
                 <p className="text-xs text-zinc-500">
-                  FAILED/DEAD personal_score legacy mirror outbox만 PENDING으로 되돌립니다. Firestore 직접 write는 여기서 실행하지 않습니다.
+                  FAILED/DEAD personal_score legacy mirror outbox만 PENDING으로 되돌립니다. Firestore 직접 write는 여기서 실행하지 않습니다. write=true도 Server DB outbox reset만 수행합니다.
                 </p>
                 {mirrorRetryResult ? (
                   <InlineMessage kind={mirrorRetryResult.write ? 'success' : 'info'}>
-                    matched {formatNumber(mirrorRetryResult.matched)} · reset {formatNumber(mirrorRetryResult.reset)} · write {String(mirrorRetryResult.write)}
+                    matched {formatNumber(mirrorRetryResult.matched)} · reset {formatNumber(mirrorRetryResult.reset)} · write {String(mirrorRetryResult.write)} · firestoreWrite {String(mirrorRetryResult.firestoreWrite ?? false)}
                   </InlineMessage>
                 ) : null}
                 {mirrorRetryError ? <InlineMessage kind="error">{errorToMessage(mirrorRetryError)}</InlineMessage> : null}

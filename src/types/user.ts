@@ -239,6 +239,8 @@ export interface UserDataDiagnostics {
 export interface UserPersonalScoreMirrorRetryResult {
   uid: string;
   write: boolean;
+  firestoreWrite?: boolean;
+  operation?: string;
   matched: number;
   reset: number;
   statuses: Record<string, number>;
