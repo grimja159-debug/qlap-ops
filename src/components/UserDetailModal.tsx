@@ -527,9 +527,9 @@ function UserDataDiagnosticsPanel({
     <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-xs font-medium text-cyan-200 uppercase tracking-wide">Server DB / Firestore Mirror 진단</h3>
+          <h3 className="text-xs font-medium text-cyan-200 uppercase tracking-wide">Server DB / Legacy Mirror 진단</h3>
           <p className="mt-1 text-xs text-zinc-500">
-            쓰기 없이 Server DB 원장, 개인 점수, Firestore mirror outbox 상태만 조회합니다.
+            쓰기 없이 Server DB 원장, 개인 점수, legacy mirror outbox 상태만 조회합니다. 이 화면은 Firestore 직접 쓰기를 실행하지 않습니다.
           </p>
         </div>
         {diagnostics && <span className="text-[11px] text-zinc-500">checked {formatDateTime(diagnostics.checkedAt)}</span>}
@@ -615,7 +615,7 @@ function UserDataDiagnosticsPanel({
             <div className="rounded border border-zinc-700/60 bg-zinc-900/40 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-zinc-300">personal_score mirror outbox</p>
+                  <p className="text-xs font-medium text-zinc-300">personal_score legacy mirror outbox</p>
                   <p className="mt-1 text-xs text-zinc-500">
                     {outboxCountsLabel(diagnostics.firestoreMirrorOutbox.counts)}
                     {' · '}
@@ -649,7 +649,7 @@ function UserDataDiagnosticsPanel({
                   </ConfirmButton>
                 </div>
                 <p className="text-xs text-zinc-500">
-                  FAILED/DEAD personal_score mirror outbox만 PENDING으로 되돌립니다. Firestore 직접 write는 여기서 실행하지 않습니다.
+                  FAILED/DEAD personal_score legacy mirror outbox만 PENDING으로 되돌립니다. Firestore 직접 write는 여기서 실행하지 않습니다.
                 </p>
                 {mirrorRetryResult ? (
                   <InlineMessage kind={mirrorRetryResult.write ? 'success' : 'info'}>
@@ -663,7 +663,7 @@ function UserDataDiagnosticsPanel({
                   columns={outboxColumns}
                   data={diagnostics.firestoreMirrorOutbox.recent}
                   rowKey={(row) => String(row.outboxId ?? `${row.targetPath}-${row.createdAt}`)}
-                  emptyMessage="mirror outbox 이력이 없습니다"
+                  emptyMessage="legacy mirror outbox 이력이 없습니다"
                 />
               </div>
               <p className="mt-2 text-xs text-zinc-600">

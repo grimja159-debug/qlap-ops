@@ -181,9 +181,9 @@ export function AdminPersonalScorePage() {
     const all = scoresQuery.data ?? [];
     return {
       serverDb: all.filter((r) => r.storageSource === 'server_db').length,
-      mirrorPending: all.filter((r) => ['OUTBOX_PENDING', 'PENDING'].includes(String(r.firestoreMirrorStatus ?? '').toUpperCase())).length,
-      mirrorFailed: all.filter((r) => ['FAILED', 'DEAD'].includes(String(r.firestoreMirrorStatus ?? '').toUpperCase())).length,
-      mirrored: all.filter((r) => ['MIRRORED', 'SENT'].includes(String(r.firestoreMirrorStatus ?? '').toUpperCase())).length,
+      legacyMirrorPending: all.filter((r) => ['OUTBOX_PENDING', 'PENDING'].includes(String(r.firestoreMirrorStatus ?? '').toUpperCase())).length,
+      legacyMirrorFailed: all.filter((r) => ['FAILED', 'DEAD'].includes(String(r.firestoreMirrorStatus ?? '').toUpperCase())).length,
+      legacyMirrored: all.filter((r) => ['MIRRORED', 'SENT'].includes(String(r.firestoreMirrorStatus ?? '').toUpperCase())).length,
       missingPuuid: all.filter((r) => !r.puuid).length,
     };
   }, [scoresQuery.data]);
@@ -244,7 +244,7 @@ export function AdminPersonalScorePage() {
       render: (r) => (
         <div className="flex min-w-32 flex-col items-start gap-1.5">
           <StatusBadge label={storageLabel(r.storageSource)} tone={r.storageSource === 'server_db' ? 'success' : 'warning'} />
-          <StatusBadge label={r.firestoreMirrorStatus ?? 'mirror unknown'} tone={mirrorTone(r.firestoreMirrorStatus)} />
+          <StatusBadge label={r.firestoreMirrorStatus ?? 'legacy mirror unknown'} tone={mirrorTone(r.firestoreMirrorStatus)} />
           {!r.puuid ? <StatusBadge label="PUUID 없음" tone="warning" /> : <StatusBadge label="PUUID 있음" tone="success" />}
         </div>
       ),
@@ -324,18 +324,18 @@ export function AdminPersonalScorePage() {
       <div className="flex flex-wrap items-center gap-1.5">
         <StatusBadge label={`Server DB ${formatNumber(storageCounts.serverDb)}`} tone="success" />
         <StatusBadge
-          label={`mirror pending ${formatNumber(storageCounts.mirrorPending)}`}
-          tone={storageCounts.mirrorPending > 0 ? 'warning' : 'success'}
+          label={`legacy pending ${formatNumber(storageCounts.legacyMirrorPending)}`}
+          tone={storageCounts.legacyMirrorPending > 0 ? 'warning' : 'success'}
         />
         <StatusBadge
-          label={`mirror failed ${formatNumber(storageCounts.mirrorFailed)}`}
-          tone={storageCounts.mirrorFailed > 0 ? 'danger' : 'success'}
+          label={`legacy failed ${formatNumber(storageCounts.legacyMirrorFailed)}`}
+          tone={storageCounts.legacyMirrorFailed > 0 ? 'danger' : 'success'}
         />
         <StatusBadge
           label={`PUUID missing ${formatNumber(storageCounts.missingPuuid)}`}
           tone={storageCounts.missingPuuid > 0 ? 'warning' : 'success'}
         />
-        <StatusBadge label={`mirrored ${formatNumber(storageCounts.mirrored)}`} />
+        <StatusBadge label={`legacy mirrored ${formatNumber(storageCounts.legacyMirrored)}`} />
       </div>
 
       <GuildMemberCoveragePanel
