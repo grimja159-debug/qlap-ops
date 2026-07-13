@@ -407,22 +407,36 @@ export interface AdminQlapCoinMirrorReconcile {
 
 export interface AdminQlapCoinMirrorMonitor {
   generatedAt: string;
+  status?: string;
+  sourceOfTruth?: string;
+  note?: string;
   outbox: {
+    status?: string;
     stats: AdminQlapCoinMirrorOutboxStats;
-    recent: AdminQlapCoinMirrorOutboxRow[];
+    recent?: AdminQlapCoinMirrorOutboxRow[];
+    recentLegacy?: AdminQlapCoinMirrorOutboxRow[];
   };
   reconcile: AdminQlapCoinMirrorReconcile;
   r2Reports: {
     available: boolean;
+    status?: string;
+    note?: string;
     error?: string;
-    latestOutbox: string[];
-    latestReconcile: string[];
+    latestOutbox?: string[];
+    latestReconcile?: string[];
+    latestLegacyOutbox?: string[];
+    latestLegacyReconcile?: string[];
   };
   worker?: {
-    dryRun: AdminLiveCwWorkerSummary;
-    write: AdminLiveCwWorkerSummary;
-    recentDryRun: Record<string, unknown>[];
-    recentWrite: Record<string, unknown>[];
+    status?: string;
+    dryRun?: AdminLiveCwWorkerSummary;
+    write?: AdminLiveCwWorkerSummary;
+    legacyDryRun?: AdminLiveCwWorkerSummary;
+    legacyWrite?: AdminLiveCwWorkerSummary;
+    recentDryRun?: Record<string, unknown>[];
+    recentWrite?: Record<string, unknown>[];
+    recentLegacyDryRun?: Record<string, unknown>[];
+    recentLegacyWrite?: Record<string, unknown>[];
   };
 }
 

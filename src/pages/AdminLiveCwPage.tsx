@@ -2015,6 +2015,11 @@ function RewardMonitorPanel({
     { key: 'created', header: 'created', render: (row) => <span className="text-xs">{formatDateTime(row.createdAt)}</span> },
   ];
   const qlapMirror = monitor.qlapCoinMirror;
+  const qlapMirrorOutboxRows = qlapMirror?.outbox.recentLegacy ?? qlapMirror?.outbox.recent ?? [];
+  const qlapMirrorLatestOutboxReports = qlapMirror?.r2Reports.latestLegacyOutbox ?? qlapMirror?.r2Reports.latestOutbox ?? [];
+  const qlapMirrorLatestReconcileReports = qlapMirror?.r2Reports.latestLegacyReconcile ?? qlapMirror?.r2Reports.latestReconcile ?? [];
+  const qlapMirrorDryRunWorker = qlapMirror?.worker?.legacyDryRun ?? qlapMirror?.worker?.dryRun;
+  const qlapMirrorWriteWorker = qlapMirror?.worker?.legacyWrite ?? qlapMirror?.worker?.write;
   const workerHealthColumns: Column<AdminLiveCwWorkerHealthSnapshot>[] = [
     {
       key: 'worker',
@@ -2260,6 +2265,8 @@ function RewardMonitorPanel({
               />
             </div>
             <div className="flex flex-wrap gap-2">
+              <StatusBadge label={qlapMirror.status === 'RETIRED' ? 'mirror retired' : 'mirror legacy'} tone={qlapMirror.status === 'RETIRED' ? 'neutral' : 'warning'} />
+              <StatusBadge label={qlapMirror.sourceOfTruth === 'SERVER_DB_LEDGER_WALLET' ? 'Server DB canonical' : 'source check'} tone={qlapMirror.sourceOfTruth === 'SERVER_DB_LEDGER_WALLET' ? 'success' : 'warning'} />
               <StatusBadge label={`mirror ${qlapMirror.reconcile.ok ? 'OK' : 'CHECK'}`} tone={mirrorReconcileTone(qlapMirror.reconcile.ok)} />
               <StatusBadge label={mirrorFirestoreCompared ? 'Firestore compare ON' : 'Firestore compare OFF'} tone={mirrorCompareTone(mirrorFirestoreCompared)} />
               <StatusBadge label={`DB total ${formatNumber(qlapMirror.reconcile.serverBalanceTotal)}`} tone="neutral" />
@@ -2270,13 +2277,13 @@ function RewardMonitorPanel({
             </div>
             {!mirrorFirestoreCompared ? (
               <p className="rounded border border-zinc-800 bg-zinc-950/40 px-3 py-2 text-xs text-zinc-400">
-                Firestore wallet comparison is disabled for normal monitoring, so this panel uses Server DB ledger/outbox/R2 only. Enable <span className="font-mono">QLAPCOIN_FIRESTORE_MIRROR_RECONCILE_READ</span> only for a targeted audit.
+                QLapCoin Firestore mirror workers are retired. This panel uses Server DB ledger/wallet data as the source of truth and shows old mirror outbox/R2 evidence only as legacy audit history.
               </p>
             ) : null}
             <div className="grid gap-4 xl:grid-cols-2">
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">recent outbox rows</p>
-                <DataTable columns={mirrorOutboxColumns} data={qlapMirror.outbox.recent.slice(0, 10)} rowKey={(row) => String(row.outboxId)} emptyMessage="No mirror outbox rows." />
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">legacy outbox rows</p>
+                <DataTable columns={mirrorOutboxColumns} data={qlapMirrorOutboxRows.slice(0, 10)} rowKey={(row) => String(row.outboxId)} emptyMessage="No legacy mirror outbox rows." />
               </div>
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">reconcile samples</p>
@@ -2285,40 +2292,40 @@ function RewardMonitorPanel({
             </div>
             <div className="grid gap-2 text-xs text-zinc-400 md:grid-cols-2">
               <div className="rounded border border-zinc-800 bg-zinc-950/40 p-2">
-                <p className="font-semibold text-zinc-300">latest outbox R2 reports</p>
-                {(qlapMirror.r2Reports.latestOutbox ?? []).slice(0, 3).map((key) => (
+                <p className="font-semibold text-zinc-300">legacy outbox R2 reports</p>
+                {qlapMirrorLatestOutboxReports.slice(0, 3).map((key) => (
                   <p key={key} className="font-mono text-[11px] text-zinc-500">{short(key)}</p>
                 ))}
-                {(qlapMirror.r2Reports.latestOutbox ?? []).length === 0 ? <p className="text-zinc-600">-</p> : null}
+                {qlapMirrorLatestOutboxReports.length === 0 ? <p className="text-zinc-600">-</p> : null}
               </div>
               <div className="rounded border border-zinc-800 bg-zinc-950/40 p-2">
-                <p className="font-semibold text-zinc-300">latest reconcile R2 reports</p>
-                {(qlapMirror.r2Reports.latestReconcile ?? []).slice(0, 3).map((key) => (
+                <p className="font-semibold text-zinc-300">legacy reconcile R2 reports</p>
+                {qlapMirrorLatestReconcileReports.slice(0, 3).map((key) => (
                   <p key={key} className="font-mono text-[11px] text-zinc-500">{short(key)}</p>
                 ))}
-                {(qlapMirror.r2Reports.latestReconcile ?? []).length === 0 ? <p className="text-zinc-600">-</p> : null}
+                {qlapMirrorLatestReconcileReports.length === 0 ? <p className="text-zinc-600">-</p> : null}
               </div>
             </div>
             {qlapMirror.worker ? (
               <div className="grid gap-2 text-xs text-zinc-400 md:grid-cols-2">
                 <div className="rounded border border-zinc-800 bg-zinc-950/40 p-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-zinc-300">mirror dry-run worker</p>
-                    <StatusBadge label={`${formatNumber(qlapMirror.worker.dryRun.entries)} logs`} tone={qlapMirror.worker.dryRun.entries > 0 ? 'success' : 'warning'} />
+                    <p className="font-semibold text-zinc-300">legacy dry-run worker</p>
+                    <StatusBadge label={qlapMirror.worker.status === 'RETIRED' ? 'retired' : `${formatNumber(qlapMirrorDryRunWorker?.entries ?? 0)} logs`} tone="neutral" />
                   </div>
-                  <JsonBlock value={qlapMirror.worker.dryRun.latest} />
+                  <JsonBlock value={qlapMirrorDryRunWorker?.latest ?? null} />
                 </div>
                 <div className="rounded border border-zinc-800 bg-zinc-950/40 p-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-zinc-300">mirror write worker</p>
-                    <StatusBadge label={`${formatNumber(qlapMirror.worker.write.entries)} logs`} tone={qlapMirror.worker.write.entries > 0 ? 'warning' : 'neutral'} />
+                    <p className="font-semibold text-zinc-300">legacy write worker</p>
+                    <StatusBadge label={qlapMirror.worker.status === 'RETIRED' ? 'retired' : `${formatNumber(qlapMirrorWriteWorker?.entries ?? 0)} logs`} tone="neutral" />
                   </div>
-                  <JsonBlock value={qlapMirror.worker.write.latest} />
+                  <JsonBlock value={qlapMirrorWriteWorker?.latest ?? null} />
                 </div>
               </div>
             ) : null}
             <p className="text-xs text-zinc-500">
-              This panel is read-only. Firestore mirror writes remain gated by CLI env/flags and should stay targeted until reconcile remains green.
+              This panel is read-only. QLapCoin Firestore mirror writes are retired; current balances and reward evidence should be checked from Server DB ledger/wallet data.
             </p>
           </div>
         ) : (
