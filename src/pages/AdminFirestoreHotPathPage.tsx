@@ -105,7 +105,7 @@ export function AdminFirestoreHotPathPage() {
     <div className="flex max-w-7xl flex-col gap-5">
       <PageSection
         title="Firestore Hot Path"
-        description="Services API가 Firestore 대신 Server DB, Redis, R2를 쓰는지 기능별로 점검합니다. 읽기 전용 운영 대시보드입니다."
+        description="Services API가 Firestore 대신 Server DB, Redis, R2를 쓰는지 기능별로 점검합니다. Legacy mirror/outbox 표시는 현재 진단 또는 호환 흔적이며, Firestore 직접 write 의미가 아닙니다."
         right={
           <button
             type="button"
