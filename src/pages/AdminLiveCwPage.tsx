@@ -2247,7 +2247,7 @@ function RewardMonitorPanel({
         </p>
       </Panel>
 
-      <Panel title="QLapCoin Firestore mirror">
+      <Panel title="QLapCoin Server DB ledger / legacy evidence">
         {qlapMirror ? (
           <div className="grid gap-3">
             <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
@@ -2259,7 +2259,7 @@ function RewardMonitorPanel({
               <StatCell label="reconcile" value={qlapMirror.reconcile.ok ? 'OK' : 'CHECK'} tone={qlapMirror.reconcile.ok ? 'text-emerald-300' : 'text-red-300'} />
               <StatCell label="checked" value={formatNumber(qlapMirror.reconcile.checked)} />
               <StatCell
-                label="FS mismatch"
+                label="legacy FS mismatch"
                 value={mirrorFirestoreCompared ? formatNumber(qlapMirror.reconcile.firestoreMismatches + qlapMirror.reconcile.firestoreMissing + qlapMirror.reconcile.firestoreInvalid) : 'skipped'}
                 tone={mirrorFirestoreCompared && (qlapMirror.reconcile.firestoreMismatches + qlapMirror.reconcile.firestoreMissing + qlapMirror.reconcile.firestoreInvalid) > 0 ? 'text-red-300' : 'text-zinc-400'}
               />
@@ -2268,16 +2268,16 @@ function RewardMonitorPanel({
               <StatusBadge label={qlapMirror.status === 'RETIRED' ? 'mirror retired' : 'mirror legacy'} tone={qlapMirror.status === 'RETIRED' ? 'neutral' : 'warning'} />
               <StatusBadge label={qlapMirror.sourceOfTruth === 'SERVER_DB_LEDGER_WALLET' ? 'Server DB canonical' : 'source check'} tone={qlapMirror.sourceOfTruth === 'SERVER_DB_LEDGER_WALLET' ? 'success' : 'warning'} />
               <StatusBadge label={`mirror ${qlapMirror.reconcile.ok ? 'OK' : 'CHECK'}`} tone={mirrorReconcileTone(qlapMirror.reconcile.ok)} />
-              <StatusBadge label={mirrorFirestoreCompared ? 'Firestore compare ON' : 'Firestore compare OFF'} tone={mirrorCompareTone(mirrorFirestoreCompared)} />
+              <StatusBadge label={mirrorFirestoreCompared ? 'legacy Firestore compare ON' : 'legacy Firestore compare OFF'} tone={mirrorCompareTone(mirrorFirestoreCompared)} />
               <StatusBadge label={`DB total ${formatNumber(qlapMirror.reconcile.serverBalanceTotal)}`} tone="neutral" />
               <StatusBadge label={`ledger ${formatNumber(qlapMirror.reconcile.ledgerSumTotal)}`} tone="neutral" />
-              <StatusBadge label={mirrorFirestoreCompared ? `Firestore ${formatNumber(qlapMirror.reconcile.firestoreQlapcoinTotal)}` : 'Firestore reads 0'} tone="neutral" />
+              <StatusBadge label={mirrorFirestoreCompared ? `legacy FS ${formatNumber(qlapMirror.reconcile.firestoreQlapcoinTotal)}` : 'Firestore reads 0'} tone="neutral" />
               <StatusBadge label={mirrorFirestoreCompared ? `version missing ${formatNumber(qlapMirror.reconcile.mirrorVersionMissing)}` : 'version check skipped'} tone={mirrorFirestoreCompared ? 'warning' : 'neutral'} />
               <StatusBadge label={qlapMirror.r2Reports.available ? 'R2 reports available' : 'R2 unavailable'} tone={qlapMirror.r2Reports.available ? 'success' : 'warning'} />
             </div>
             {!mirrorFirestoreCompared ? (
               <p className="rounded border border-zinc-800 bg-zinc-950/40 px-3 py-2 text-xs text-zinc-400">
-                QLapCoin Firestore mirror workers are retired. This panel uses Server DB ledger/wallet data as the source of truth and shows old mirror outbox/R2 evidence only as legacy audit history.
+                QLapCoin Firestore mirror workers are retired. Server DB ledger/wallet data is the source of truth; old outbox/R2 rows are displayed only as legacy audit evidence.
               </p>
             ) : null}
             <div className="grid gap-4 xl:grid-cols-2">
@@ -2286,7 +2286,7 @@ function RewardMonitorPanel({
                 <DataTable columns={mirrorOutboxColumns} data={qlapMirrorOutboxRows.slice(0, 10)} rowKey={(row) => String(row.outboxId)} emptyMessage="No legacy mirror outbox rows." />
               </div>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">reconcile samples</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">legacy reconcile samples</p>
                 <DataTable columns={mirrorSampleColumns} data={qlapMirror.reconcile.samples.slice(0, 10)} rowKey={(row) => `${row.maskedUid}-${row.status}-${row.serverBalance ?? '-'}-${row.firestoreQlapcoin ?? '-'}`} emptyMessage="No mirror reconcile issues." />
               </div>
             </div>
@@ -2325,7 +2325,7 @@ function RewardMonitorPanel({
               </div>
             ) : null}
             <p className="text-xs text-zinc-500">
-              This panel is read-only. QLapCoin Firestore mirror writes are retired; current balances and reward evidence should be checked from Server DB ledger/wallet data.
+              This panel is read-only. QLapCoin Firestore mirror writes are retired; current balances and reward evidence are checked from Server DB ledger/wallet data.
             </p>
           </div>
         ) : (
