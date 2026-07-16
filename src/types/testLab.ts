@@ -130,7 +130,6 @@ export interface SeedUsersRequest {
   identityVerified: boolean;
   createRiotProfile: boolean;
   initialQlCoin: number;
-  initialGmTiket: number;
   reason: string;
   profileOverrides?: SeedUserProfileOverride[];
 }

@@ -50,6 +50,12 @@ export interface GuildMemberPersonalScoreCoverageSample {
   memberPublicId: string;
   uidMasked: string;
   reason: 'NO_PERSONAL_SCORE_SUMMARY' | 'NO_SERVER_PROFILE' | string;
+  hasServerProfile?: boolean;
+  hasRiotId?: boolean;
+  hasHighestTier?: boolean;
+  hasHighestLp?: boolean;
+  hasPersonalScoreField?: boolean;
+  suggestedAction?: string;
 }
 
 export interface GuildMemberPersonalScoreCoverage {
@@ -65,6 +71,8 @@ export interface GuildMemberPersonalScoreCoverage {
   profileSummaryReady: number;
   embeddedSummaryReady: number;
   missingServerProfile: number;
+  missingReasonCounts?: Record<string, number>;
+  suggestedActionCounts?: Record<string, number>;
   sampleMissing: GuildMemberPersonalScoreCoverageSample[];
 }
 

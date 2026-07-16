@@ -68,7 +68,7 @@ function GrantForm({
       />
 
       <InlineMessage kind="warning">
-        길드 포인트 지급은 Server DB 원장과 감사 로그에 남습니다. Firestore mirror는 별도 동기화 상태를 확인하세요.
+        길드 포인트 지급은 Server DB 원장과 감사 로그에 남습니다. 지급 후 원장/랭킹 반영 상태를 확인하세요.
       </InlineMessage>
 
       <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 /**
- * user_access 컬렉션의 기능 플래그.
+ * Server DB user access 기능 플래그.
  *
  * role/plan/status 같은 계정 권한은 여기서 다루지 않고
  * PATCH /api/admin/users/:uid/access 에서 관리한다.

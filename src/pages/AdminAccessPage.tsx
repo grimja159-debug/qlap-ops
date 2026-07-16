@@ -9,7 +9,7 @@ import { InlineMessage } from '../components/InlineMessage';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { StatusBadge } from '../components/StatusBadge';
 import { errorToMessage } from '../lib/apiError';
-import { formatDateTime } from '../lib/format';
+import { formatDateTime, shortId } from '../lib/format';
 import { accessApi } from '../services/accessApi';
 import { ACCESS_FLAG_KEYS, ACCESS_FLAG_LABELS, type AccessFlagKey, type UserAccess } from '../types/access';
 
@@ -92,7 +92,7 @@ export function AdminAccessPage() {
     mutationFn: ({ uid, patch }: { uid: string; patch: Partial<Record<AccessFlagKey, boolean>> }) =>
       accessApi.update({ uid, ...patch }),
     onSuccess: (access) => {
-      setNotice(`${access.uid} 기능 플래그가 저장되었습니다.`);
+      setNotice(`${shortId(access.uid)} 기능 플래그가 저장되었습니다.`);
       setEditing(null);
       void qc.invalidateQueries({ queryKey: ['admin-access'] });
       void qc.invalidateQueries({ queryKey: ['access-uid'] });
@@ -234,7 +234,7 @@ export function AdminAccessPage() {
             <QueryState isLoading={lookup.isLoading} error={lookup.error}>
               {lookup.data && (
                 <div className="flex flex-wrap items-center gap-5 rounded border border-zinc-700/60 bg-zinc-900 p-3">
-                  <CopyableId value={lookup.data.uid} full />
+                  <CopyableId value={lookup.data.uid} full sensitive />
                   {ACCESS_FLAG_KEYS.map((key) => (
                     <span key={key} className="flex items-center gap-1.5 text-xs text-zinc-400">
                       {ACCESS_FLAG_LABELS[key]}
@@ -260,7 +260,7 @@ export function AdminAccessPage() {
         <PageSection accent title="기능 플래그 편집" description="저장 시 변경된 플래그만 백엔드로 전송되고 감사 로그에 기록됩니다.">
           <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
             <span className="text-zinc-500">대상</span>
-            <CopyableId value={editing.draft.uid} full />
+            <CopyableId value={editing.draft.uid} full sensitive />
           </div>
           <div className="mb-4 flex flex-wrap gap-6">
             {ACCESS_FLAG_KEYS.map((key) => (

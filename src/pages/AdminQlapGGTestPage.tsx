@@ -8,7 +8,7 @@ import { PageSection } from '../components/PageSection';
 import { QueryState } from '../components/QueryState';
 import { StatusBadge } from '../components/StatusBadge';
 import { errorToMessage } from '../lib/apiError';
-import { formatDateTime } from '../lib/format';
+import { formatDateTime, shortId } from '../lib/format';
 import { qlapggTestApi } from '../services/qlapggTestApi';
 import type {
   ActAsResult,
@@ -58,7 +58,7 @@ const actionResultColumns: Column<ActionResultRow>[] = [
     header: '대상',
     render: (row) => (
       <span className="font-mono text-xs text-zinc-300">
-        {row.uid ?? row.guildId ?? row.targetId ?? '-'}
+        {row.uid ? shortId(row.uid) : row.guildId ?? row.targetId ?? '-'}
       </span>
     ),
   },
@@ -98,13 +98,13 @@ const logColumns: Column<QlapggExecutionLog>[] = [
   {
     key: 'actorUid',
     header: 'actorUid',
-    render: (row) => <span className="font-mono text-xs text-zinc-400">{row.actorUid}</span>,
+    render: (row) => <span className="font-mono text-xs text-zinc-400">{shortId(row.actorUid)}</span>,
   },
   {
     key: 'target',
     header: 'target',
     render: (row) => (
-      <span className="font-mono text-xs text-zinc-400">{row.targetUid ?? row.targetId ?? '-'}</span>
+      <span className="font-mono text-xs text-zinc-400">{row.targetUid ? shortId(row.targetUid) : row.targetId ?? '-'}</span>
     ),
   },
   {
@@ -251,11 +251,11 @@ export function AdminQlapGGTestPage() {
           checked={selectedUids.includes(user.uid)}
           disabled={!isSelectableTestUser(user)}
           onChange={(event) => toggleUid(user.uid, event.target.checked)}
-          aria-label={`${user.uid} 선택`}
+          aria-label={`${shortId(user.uid)} 선택`}
         />
       ),
     },
-    { key: 'uid', header: 'uid', render: (user) => <span className="font-mono text-xs text-zinc-300">{user.uid}</span> },
+    { key: 'uid', header: 'uid', render: (user) => <span className="font-mono text-xs text-zinc-300">{shortId(user.uid)}</span> },
     { key: 'displayName', header: '닉네임', render: (user) => <span>{user.displayName ?? '-'}</span> },
     { key: 'riotId', header: 'Riot ID', render: (user) => <span className="font-mono text-xs">{user.riotId ?? '-'}</span> },
     { key: 'tier', header: '티어', render: (user) => <StatusBadge label={user.tier ?? '없음'} tone={user.tier ? 'info' : 'neutral'} /> },
@@ -360,7 +360,7 @@ export function AdminQlapGGTestPage() {
             <span>조회 {users.length}명</span>
             <span>선택 {selectedUsers.length}명</span>
             {selectedUsers.length > 0 && (
-              <span className="font-mono text-zinc-600">{selectedUsers.slice(0, 5).map((user) => user.uid).join(', ')}</span>
+              <span className="font-mono text-zinc-600">{selectedUsers.slice(0, 5).map((user) => shortId(user.uid)).join(', ')}</span>
             )}
           </div>
           <DataTable
@@ -385,7 +385,7 @@ export function AdminQlapGGTestPage() {
               { value: '', label: '테스트 유저 선택' },
               ...users.map((user) => ({
                 value: user.uid,
-                label: `${user.displayName ?? user.uid} (${user.uid})`,
+                label: `${user.displayName ?? shortId(user.uid)} (${shortId(user.uid)})`,
               })),
             ]}
             hint="isTestUser=true 또는 test_ prefix UID만 백엔드에서 허용합니다."
@@ -568,7 +568,7 @@ function SelectedUsersPreview({ users, requiredCount }: { users: TestUser[]; req
         {requiredCount != null && <span className="text-xs text-zinc-500">필수 {requiredCount}명</span>}
       </div>
       <div className="max-h-28 overflow-auto font-mono text-xs text-zinc-500">
-        {users.length > 0 ? users.map((user) => <div key={user.uid}>{user.uid}</div>) : '선택된 테스트 유저가 없습니다.'}
+        {users.length > 0 ? users.map((user) => <div key={user.uid}>{shortId(user.uid)}</div>) : '선택된 테스트 유저가 없습니다.'}
       </div>
     </div>
   );

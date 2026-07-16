@@ -237,7 +237,7 @@ export function AdminGiftsPage() {
             {sub.data && (
               <div className="grid gap-3 md:grid-cols-4">
                 <InfoBlock label="UID">
-                  <CopyableId value={sub.data.uid} full />
+                  <CopyableId value={sub.data.uid} full sensitive />
                 </InfoBlock>
                 <InfoBlock label="유저">
                   {sub.data.displayName ?? sub.data.email ?? '-'}

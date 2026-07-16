@@ -107,7 +107,7 @@ function FlagBadge({ flag }: { flag: VerifyFlag }) {
 
 function storageLabel(value: string | null | undefined): string {
   if (value === 'server_db') return 'Server DB';
-  if (value === 'firestore_import') return 'Firestore import';
+  if (value === 'firestore_import') return '기존 DB 이관값';
   return value || 'unknown';
 }
 
@@ -369,6 +369,8 @@ function GuildMemberCoveragePanel({
   const missing = coverage?.missingDisplaySummary ?? 0;
   const checked = coverage?.checked ?? 0;
   const ready = coverage?.displayReady ?? 0;
+  const missingReasons = Object.entries(coverage?.missingReasonCounts ?? {});
+  const suggestedActions = Object.entries(coverage?.suggestedActionCounts ?? {});
   return (
     <PageSection
       title="길드원 티어 표시 점검"
@@ -403,6 +405,34 @@ function GuildMemberCoveragePanel({
           </InlineMessage>
         ) : null}
 
+        {coverage && (missingReasons.length > 0 || suggestedActions.length > 0) ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3">
+              <p className="mb-2 text-xs font-semibold text-zinc-300">누락 원인</p>
+              <div className="flex flex-wrap gap-1.5">
+                {missingReasons.length > 0 ? missingReasons.map(([reason, count]) => (
+                  <StatusBadge
+                    key={reason}
+                    label={`${reason} ${formatNumber(count)}`}
+                    tone={reason === 'NO_SERVER_PROFILE' ? 'danger' : 'warning'}
+                  />
+                )) : <StatusBadge label="누락 없음" tone="success" />}
+              </div>
+            </div>
+            <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3">
+              <p className="mb-2 text-xs font-semibold text-zinc-300">권장 조치</p>
+              <div className="flex flex-col gap-1.5">
+                {suggestedActions.length > 0 ? suggestedActions.map(([action, count]) => (
+                  <div key={action} className="flex items-center justify-between gap-3 rounded bg-zinc-900/80 px-2 py-1.5">
+                    <span className="text-xs text-zinc-300">{action}</span>
+                    <StatusBadge label={`${formatNumber(count)}명`} tone="warning" />
+                  </div>
+                )) : <StatusBadge label="조치 필요 없음" tone="success" />}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {coverage?.sampleMissing?.length ? (
           <div className="overflow-hidden rounded border border-zinc-800">
             <table className="min-w-full divide-y divide-zinc-800 text-sm">
@@ -412,6 +442,8 @@ function GuildMemberCoveragePanel({
                   <th className="px-3 py-2 text-left font-medium">memberPublicId</th>
                   <th className="px-3 py-2 text-left font-medium">uid</th>
                   <th className="px-3 py-2 text-left font-medium">reason</th>
+                  <th className="px-3 py-2 text-left font-medium">필드 상태</th>
+                  <th className="px-3 py-2 text-left font-medium">조치</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800">
@@ -427,6 +459,16 @@ function GuildMemberCoveragePanel({
                     <td className="px-3 py-2">
                       <StatusBadge label={row.reason} tone={row.reason === 'NO_SERVER_PROFILE' ? 'danger' : 'warning'} />
                     </td>
+                    <td className="px-3 py-2">
+                      <div className="flex min-w-44 flex-wrap gap-1">
+                        <StatusBadge label={row.hasServerProfile ? 'profile 있음' : 'profile 없음'} tone={row.hasServerProfile ? 'success' : 'danger'} />
+                        <StatusBadge label={row.hasRiotId ? 'Riot 있음' : 'Riot 없음'} tone={row.hasRiotId ? 'success' : 'warning'} />
+                        <StatusBadge label={row.hasHighestTier ? '티어 있음' : '티어 없음'} tone={row.hasHighestTier ? 'success' : 'warning'} />
+                        <StatusBadge label={row.hasHighestLp ? 'LP 있음' : 'LP 없음'} tone={row.hasHighestLp ? 'success' : 'warning'} />
+                        <StatusBadge label={row.hasPersonalScoreField ? '점수 있음' : '점수 없음'} tone={row.hasPersonalScoreField ? 'success' : 'warning'} />
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-zinc-400">{row.suggestedAction ?? 'my-info 저장 상태 확인'}</td>
                   </tr>
                 ))}
               </tbody>

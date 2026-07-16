@@ -124,7 +124,7 @@ export function SupportInboxPage({ type, title, description }: SupportInboxPageP
         key: 'uid',
         header: 'UID',
         width: 'w-56',
-        render: (row) => <CopyableId value={row.authorUid} full />,
+        render: (row) => <CopyableId value={row.authorUid} full sensitive />,
       },
       {
         key: 'attachments',
@@ -214,12 +214,12 @@ export function SupportInboxPage({ type, title, description }: SupportInboxPageP
 
               <dl className="grid content-start gap-3 rounded-lg border border-zinc-700/60 bg-zinc-950/30 p-4 text-sm">
                 <DetailItem label="문서 ID" value={<CopyableId value={selected.id} full />} />
-                <DetailItem label="UID" value={<CopyableId value={selected.authorUid} full />} />
+                <DetailItem label="UID" value={<CopyableId value={selected.authorUid} full sensitive />} />
                 <DetailItem label="이름" value={selected.authorDisplayName ?? '-'} />
                 <DetailItem label="이메일" value={selected.authorEmail ?? '-'} />
                 <DetailItem label="접수일" value={formatDateTime(selected.createdAt)} />
                 <DetailItem label="수정일" value={formatDateTime(selected.updatedAt)} />
-                <DetailItem label="처리자" value={<CopyableId value={selected.handledBy} full />} />
+                <DetailItem label="처리자" value={<CopyableId value={selected.handledBy} full sensitive />} />
                 <DetailItem label="Storage" value={<SupportStorageBadge row={selected} />} />
                 <DetailItem label="Mirror" value={`${selected.serverDbSource ?? '-'} / ${selected.serverDbMirrorStatus ?? '-'}`} />
               </dl>

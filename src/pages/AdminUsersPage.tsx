@@ -23,7 +23,7 @@ import {
   type UserStatus,
 } from '../lib/constants';
 import { planTone, userStatusTone } from '../lib/statusTone';
-import { formatDate, formatNumber } from '../lib/format';
+import { formatDate, formatNumber, shortId } from '../lib/format';
 import { downloadCsv } from '../lib/csv';
 import { errorToMessage } from '../lib/apiError';
 import type { UserCompletenessReport, UserSearchField } from '../types/user';
@@ -198,7 +198,7 @@ export function AdminUsersPage() {
     mutationFn: ({ uid, patch }: { uid: string; patch: Parameters<typeof userApi.updateProfile>[1] }) =>
       userApi.updateProfile(uid, patch),
     onSuccess: (user) => {
-      setNotice(`${user.displayName ?? user.email ?? user.uid} 업데이트 완료`);
+      setNotice(`${user.displayName ?? user.email ?? shortId(user.uid)} 업데이트 완료`);
       void qc.invalidateQueries({ queryKey: ['admin-users'] });
       void qc.invalidateQueries({ queryKey: ['user', user.uid] });
     },

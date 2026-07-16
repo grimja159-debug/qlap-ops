@@ -520,7 +520,7 @@ function OrderDetailModal({
         {order && (
           <div className="flex flex-col gap-4">
             <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <Row label="UID"><CopyableId value={order.uid} full /></Row>
+              <Row label="UID"><CopyableId value={order.uid} full sensitive /></Row>
               <Row label="이메일">{sub.data?.email ?? '–'}</Row>
               <Row label="상품명">{PROD(order.productName)}</Row>
               <Row label="상품유형">{PROD(order.productType)}</Row>

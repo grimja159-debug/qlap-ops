@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from './Modal';
+import { CopyableId } from './CopyableId';
 import { InlineMessage } from './InlineMessage';
 import { NumberField, SelectField, TextField } from './Field';
 import { ToggleSwitch } from './ToggleSwitch';
@@ -110,7 +111,7 @@ export function UserCreateModal({ open, onClose }: UserCreateModalProps) {
     <Modal open={open} onClose={onClose} size="lg" title="유저 추가">
       <div className="flex flex-col gap-3">
         <InlineMessage kind="info">
-          Firebase Auth 계정을 먼저 만들고, 발급된 Auth UID로 Server DB 프로필, 지갑, 권한, 연동 정보를 생성합니다. Firestore는 mirror/outbox 상태로만 확인하세요.
+          Firebase Auth 계정을 먼저 만들고, 발급된 Auth UID로 Server DB 프로필, 지갑, 권한, 연동 정보를 생성합니다.
         </InlineMessage>
 
         <div className="grid md:grid-cols-2 gap-3">
@@ -156,7 +157,8 @@ export function UserCreateModal({ open, onClose }: UserCreateModalProps) {
 
           {result && (
             <InlineMessage kind="success">
-              생성 완료 · {result.user.displayName ?? result.user.email ?? result.user.uid} ({result.user.uid})
+              생성 완료 · {result.user.displayName ?? result.user.email ?? '사용자'} (
+              <CopyableId value={result.user.uid} full sensitive />)
               {result.temporaryPassword && (
                 <span className="block mt-1">
                   임시 비밀번호 <code className="font-mono text-zinc-100">{result.temporaryPassword}</code>

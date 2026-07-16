@@ -128,7 +128,7 @@ export interface UserAccessProfilePatch {
 /**
  * POST /api/admin/users 의 본문(운영자 유저 생성).
  * 백엔드가 Firebase Auth UID를 발급한 뒤 Server DB 프로필/지갑/권한/연동 정보를 만든다.
- * Firestore mirror/outbox는 백엔드 정책에 따라 별도 동기화된다.
+ * legacy outbox/projection 상태는 관리자 진단 화면에서 별도 확인한다.
  */
 export interface UserCreateInput {
   email: string;

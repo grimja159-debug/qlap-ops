@@ -73,7 +73,6 @@ export interface GuildActionLog {
   guildId: string;
   uid: string;
   action: string;
-  usedGmTiket?: boolean;
   createdAt: IsoDate;
   storageSource?: string | null;
   firestoreReads?: number | null;

@@ -8,6 +8,7 @@ import { PageSection } from '../components/PageSection';
 import { QueryState } from '../components/QueryState';
 import { StatusBadge } from '../components/StatusBadge';
 import { errorToMessage } from '../lib/apiError';
+import { shortId } from '../lib/format';
 import type { Tone } from '../lib/statusTone';
 import { itemApi } from '../services/itemApi';
 import { liveCwAdminApi } from '../services/liveCwAdminApi';
@@ -1792,7 +1793,7 @@ function RewardMonitorPanel({
   ];
 
   const userColumns: Column<AdminLiveCwRewardMonitorAggregate>[] = [
-    { key: 'uid', header: 'uid', render: (row) => <span className="font-mono text-xs">{short(row.uid ?? '-')}</span> },
+    { key: 'uid', header: 'uid', render: (row) => <span className="font-mono text-xs">{shortId(row.uid)}</span> },
     { key: 'coin', header: 'coin', render: (row) => <span className="font-semibold text-emerald-300">{formatNumber(row.totalCoin)}</span> },
     { key: 'logs', header: 'logs', render: (row) => `${formatNumber(row.logCount)}건` },
     {
@@ -1813,7 +1814,7 @@ function RewardMonitorPanel({
 
   const coinLogColumns: Column<AdminLiveCwCoinLog>[] = [
     { key: 'amount', header: 'amount', render: (row) => <span className="font-semibold text-emerald-300">{formatNumber(row.amount)}</span> },
-    { key: 'uid', header: 'uid', render: (row) => <span className="font-mono text-xs">{short(row.uid ?? '-')}</span> },
+    { key: 'uid', header: 'uid', render: (row) => <span className="font-mono text-xs">{shortId(row.uid)}</span> },
     {
       key: 'room',
       header: 'room',
@@ -3064,7 +3065,7 @@ function TeamBox({ title, participants, captains }: { title: string; participant
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate text-sm text-zinc-100">{participant.selectedPlayRiotId || participant.mainRiotId || participant.riotId || 'Riot ID 없음'}</p>
-                <p className="truncate text-xs text-zinc-500">{short(participant.uid)}</p>
+                <p className="truncate text-xs text-zinc-500">{shortId(participant.uid)}</p>
                 <p className="truncate text-xs text-zinc-500">
                   {[participant.highestTier, participant.highestRank, typeof participant.highestLp === 'number' ? `${participant.highestLp}LP` : null].filter(Boolean).join(' ') || 'NO_TIER'} · score {participant.personalScore ?? '-'}
                 </p>

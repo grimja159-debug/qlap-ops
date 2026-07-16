@@ -11,6 +11,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { errorToMessage } from '../lib/apiError';
 import { CURRENCY_LABELS, GUILD_MEMBER_ROLE_LABELS, PLAN_LABELS, SEASON_STATUS_LABELS } from '../lib/constants';
 import { formatDateTime, formatNumber } from '../lib/format';
+import { guildApi, type GuildRankingRebuildResult } from '../services/guildApi';
 import { testLabApi } from '../services/testLabApi';
 import type {
   AssignGuildMembersRequest,
@@ -221,7 +222,6 @@ function SeedUsersPanel() {
     identityVerified: false,
     createRiotProfile: true,
     initialQlCoin: 1000,
-    initialGmTiket: 0,
     reason: '길드 화면 테스트용',
   });
   const mutation = useMutation({ mutationFn: testLabApi.seedUsers, onSuccess: invalidate });
@@ -426,18 +426,76 @@ function WalletPanel() {
 }
 
 function SeasonPanel() {
-  const seasonEndpoints = testLabApi.endpoints.filter((e) => e.key.startsWith('season-'));
+  const qc = useQueryClient();
+  const [form, setForm] = useState({
+    seasonId: '',
+    topN: 100,
+    reason: '길드 랭킹 스냅샷 재생성',
+  });
+  const rebuildMutation = useMutation({
+    mutationFn: (input: { dryRun: boolean }) =>
+      guildApi.rebuildRankingSnapshot(form.seasonId.trim(), {
+        dryRun: input.dryRun,
+        topN: form.topN,
+        reason: form.reason.trim(),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin-guilds'] });
+      void qc.invalidateQueries({ queryKey: ['test-lab-summary'] });
+    },
+  });
+  const plannedEndpoints = testLabApi.endpoints.filter((e) => e.key === 'season-clone');
+  const valid = form.seasonId.trim() !== '' && form.topN >= 1 && form.topN <= 500 && form.reason.trim() !== '';
+
   return (
     <div className="max-w-3xl flex flex-col gap-4">
       <InlineMessage kind="info">
-        시즌 상태 변경/복제/랭킹 재계산은 시즌 라우트(test-lab 모듈 밖)를 수정해야 해서 이번 범위에서 제외했습니다. 시즌 생성/수정/종료는 <span className="text-zinc-300">시즌 관리</span> 페이지에서 가능합니다.
+        시즌 상태 변경은 <span className="text-zinc-300">시즌 관리</span> 페이지에서 처리합니다. 랭킹 재계산은 QLapGuild의 스냅샷 rebuild API에 연결되며, 미리보기는 write 없이 실행됩니다.
       </InlineMessage>
-      <NotImplementedNotice
-        title="시즌 빠른 도구 미구현"
-        reason="아래 엔드포인트는 시즌(guildRoutes) 라우트 변경이 필요합니다. 테스트랩 범위(QLapServices test-lab 모듈)에 포함되지 않아 비활성입니다."
-        endpoints={seasonEndpoints}
-      />
+      <SubPanel title="길드 랭킹 스냅샷 재생성">
+        <TextField label="seasonId" value={form.seasonId} onChange={(seasonId) => setForm({ ...form, seasonId })} required />
+        <NumberField label="topN" value={form.topN} min={1} max={500} onChange={(topN) => setForm({ ...form, topN })} />
+        <TextAreaField label="reason" value={form.reason} onChange={(reason) => setForm({ ...form, reason })} hint="admin audit와 스냅샷 근거에 남길 사유입니다." required />
+        <div className="flex flex-wrap items-center gap-3">
+          <ConfirmButton
+            tone="neutral"
+            confirmLabel="dryRun 실행"
+            disabled={!valid || rebuildMutation.isPending}
+            onConfirm={() => rebuildMutation.mutate({ dryRun: true })}
+          >
+            {rebuildMutation.isPending ? '처리 중...' : '미리보기'}
+          </ConfirmButton>
+          <ConfirmButton
+            tone="danger"
+            confirmLabel="REBUILD RANKING SNAPSHOT"
+            disabled={!valid || rebuildMutation.isPending}
+            onConfirm={() => rebuildMutation.mutate({ dryRun: false })}
+          >
+            실제 스냅샷 생성
+          </ConfirmButton>
+          <span className="text-xs text-zinc-500">실제 생성은 QLapGuild Redis 랭킹 캐시를 무효화합니다.</span>
+        </div>
+        <RankingRebuildResult result={rebuildMutation.data} error={rebuildMutation.error} />
+      </SubPanel>
+      {plannedEndpoints.length > 0 && (
+        <NotImplementedNotice
+          title="아직 계획 상태인 시즌 도구"
+          reason="시즌 복제는 별도 백엔드 정책이 필요해 아직 버튼을 열지 않았습니다. 기존 시즌 생성/수정/롤오버는 시즌 관리 페이지에서 사용하세요."
+          endpoints={plannedEndpoints}
+        />
+      )}
     </div>
+  );
+}
+
+function RankingRebuildResult({ result, error }: { result: GuildRankingRebuildResult | undefined; error: unknown }) {
+  if (error) return <InlineMessage kind="error">{errorToMessage(error)}</InlineMessage>;
+  if (!result) return null;
+  const rowCount = Array.isArray(result.snapshot?.rows) ? result.snapshot.rows.length : 0;
+  return (
+    <InlineMessage kind={result.wrote ? 'success' : 'info'}>
+      {result.wrote ? '스냅샷 생성 완료' : '미리보기 완료'} · seasonId {result.documentId} · guildCount {formatNumber(result.snapshot?.guildCount)} · rows {formatNumber(rowCount)} · Server DB read {formatNumber(result.estimatedServerDbReadCount)} · Server DB write {formatNumber(result.estimatedServerDbWriteCount)}
+    </InlineMessage>
   );
 }
 

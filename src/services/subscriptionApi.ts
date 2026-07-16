@@ -1,8 +1,8 @@
 /**
- * 구독관리 API 클라이언트 (subscriptions + user_access 권위 reconcile).
+ * 구독관리 API 클라이언트 (subscriptions + Server DB user access 권위 reconcile).
  *
  * 수동 PRO 지급/연장/회수는 모두 audit log 에 기록된다(백엔드 subscription.* 액션).
- * 권한 판단의 진짜 소스는 user_access/{uid} 이며, 목록의 proUntil/isPro 는 그것을 반영한다.
+ * 권한 판단의 진짜 소스는 Server DB user access/profile projection이며, 목록의 proUntil/isPro 는 그것을 반영한다.
  */
 import { api, buildQuery } from './api';
 import type { Subscription, SubscriptionMutationRequest } from '../types/billing';

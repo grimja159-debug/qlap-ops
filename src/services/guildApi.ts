@@ -268,6 +268,30 @@ export interface GuildMemberScoreDiagnostic {
   message?: string;
 }
 
+export interface GuildRankingRebuildResult {
+  dryRun: boolean;
+  wouldWrite: boolean;
+  wrote: boolean;
+  collection: string;
+  documentId: string;
+  estimatedReadCount: number;
+  estimatedWriteCount: number;
+  estimatedServerDbReadCount: number;
+  estimatedServerDbWriteCount: number;
+  readBreakdown?: {
+    seasonEntries?: number;
+    activeGuilds?: number;
+    missingGuilds?: number;
+  };
+  snapshot?: {
+    seasonId?: string;
+    guildCount?: number;
+    topN?: number;
+    generatedAt?: string;
+    rows?: unknown[];
+  };
+}
+
 export const guildApi = {
   list: (filter: GuildListFilter = {}) =>
     api
@@ -371,4 +395,13 @@ export const guildApi = {
       method: 'POST',
       body: input,
     }).then((r) => r.result),
+
+  rebuildRankingSnapshot: (seasonId: string, input: { dryRun: boolean; topN: number; reason: string }) =>
+    guildCoreJson<{ rebuild: GuildRankingRebuildResult }>(
+      `/api/admin/seasons/${encodeURIComponent(seasonId)}/rankings/rebuild-snapshot`,
+      {
+        method: 'POST',
+        body: input,
+      },
+    ).then((r) => r.rebuild),
 };

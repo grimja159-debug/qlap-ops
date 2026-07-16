@@ -8,7 +8,7 @@ import { SelectField, TextAreaField, TextField } from './Field';
 import { StatusBadge } from './StatusBadge';
 import { supportApi } from '../services/supportApi';
 import { errorToMessage } from '../lib/apiError';
-import { formatDateTime } from '../lib/format';
+import { formatDateTime, shortId } from '../lib/format';
 import type { SupportRequest, SupportStatus, SupportType } from '../types/support';
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
@@ -89,7 +89,7 @@ export function SupportRequestPage({ type, title, submitLabel, description, tone
         key: 'author',
         header: '작성자',
         render: (row) => (
-          <span className="text-xs text-zinc-400">{row.authorDisplayName ?? row.authorEmail ?? row.authorUid}</span>
+          <span className="text-xs text-zinc-400">{row.authorDisplayName ?? row.authorEmail ?? shortId(row.authorUid)}</span>
         ),
       },
       {

@@ -9,9 +9,10 @@
     "build": "tsc -b && vite build",
     "audit:package-manager": "node scripts/audit-package-manager.mjs",
     "audit:firestore-sdk": "node scripts/audit-no-firestore-sdk.mjs",
+    "audit:sensitive-id-display": "node scripts/audit-sensitive-id-display.mjs",
     "audit:production-api-env": "node scripts/audit-production-api-env.mjs",
     "smoke:admin-frontend": "node scripts/admin-frontend-readiness-smoke.mjs",
-    "preflight:frontend": "npm run audit:package-manager && npm run audit:firestore-sdk && npm run audit:production-api-env && npm run build",
+    "preflight:frontend": "npm run audit:package-manager && npm run audit:firestore-sdk && npm run audit:production-api-env && npm run audit:sensitive-id-display && npm run build",
     "preflight:runtime": "npm run preflight:frontend && npm run smoke:admin-frontend",
     "lint": "eslint .",
     "preview": "vite preview"

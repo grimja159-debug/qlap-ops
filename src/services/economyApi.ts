@@ -6,7 +6,7 @@
  *   POST /api/admin/users/:uid/revoke-qlcoin
  *
  * amount 는 항상 양수로 보내고, 지급/차감은 grant-/revoke- 접두사로 구분한다.
- * 차감 시 잔액이 음수가 되면 백엔드가 INSUFFICIENT_BALANCE / GMTIKET_REQUIRED 로 막는다.
+ * 차감 시 잔액이 음수가 되면 백엔드가 INSUFFICIENT_BALANCE 로 막는다.
  */
 import { api } from './api';
 import type { EconomyChangeRequest, EconomyChangeResult, CurrencyType } from '../types/economy';

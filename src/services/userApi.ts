@@ -86,7 +86,7 @@ export const userApi = {
   /**
    * 운영자 유저 생성(super_admin 전용).
    * 백엔드는 Firebase Auth 계정을 만든 뒤 Server DB 프로필/지갑/권한/연동 정보를 생성하고,
-   * Firestore mirror/outbox 상태는 진단 패널에서 별도로 확인한다.
+   * 진단 패널에서 Server DB projection과 legacy outbox 상태를 별도로 확인한다.
    */
   create: (input: UserCreateInput) =>
     api

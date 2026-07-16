@@ -86,9 +86,7 @@ function postIdOf(post: QStargramAdminPost): string {
 }
 
 function maskUid(uid: string | null | undefined): string {
-  if (!uid) return '-';
-  if (uid.length <= 10) return uid;
-  return `${uid.slice(0, 6)}...${uid.slice(-4)}`;
+  return shortId(uid);
 }
 
 function preview(value: string | null | undefined, max = 90): string {

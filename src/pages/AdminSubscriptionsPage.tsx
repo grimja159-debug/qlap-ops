@@ -9,7 +9,7 @@ import { Modal } from '../components/Modal';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { InlineMessage } from '../components/InlineMessage';
 import { errorToMessage } from '../lib/apiError';
-import { formatDate, formatDateTime } from '../lib/format';
+import { formatDate, formatDateTime, shortId } from '../lib/format';
 import { dataSourceLabel, dataSourceTitle, subscriptionTierTone } from '../lib/statusTone';
 import { SUBSCRIPTION_TIERS, SUBSCRIPTION_TIER_LABELS, type SubscriptionTier } from '../lib/constants';
 import { subscriptionApi } from '../services/subscriptionApi';
@@ -132,7 +132,7 @@ export function AdminSubscriptionsPage() {
             <QueryState isLoading={lookup.isLoading} error={lookup.error}>
               {lookup.data && (
                 <div className="flex flex-wrap items-center gap-5 rounded border border-zinc-700/60 bg-zinc-900 p-3">
-                  <CopyableId value={lookup.data.uid} full />
+                  <CopyableId value={lookup.data.uid} full sensitive />
                   <StatusBadge label={SUBSCRIPTION_TIER_LABELS[lookup.data.tier]} tone={subscriptionTierTone(lookup.data.tier)} />
                   <StorageBadge row={lookup.data} />
                   <span className="text-xs text-zinc-400">proUntil {formatDate(lookup.data.proUntil)} / 남은 {lookup.data.remainingDays}일</span>
@@ -214,7 +214,7 @@ function ManageSubscriptionModal({ uid, onClose, onDone }: { uid: string; onClos
     <Modal
       open
       onClose={onClose}
-      title={`구독 관리 - ${uid}`}
+      title={`구독 관리 - ${shortId(uid)}`}
       size="md"
       headerRight={sub.data ? <StatusBadge label={SUBSCRIPTION_TIER_LABELS[sub.data.tier]} tone={subscriptionTierTone(sub.data.tier)} /> : undefined}
     >

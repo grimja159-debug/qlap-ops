@@ -25,7 +25,7 @@ import {
   IDENTITY_PROVIDER_LABELS,
 } from '../lib/constants';
 import { userStatusTone, planTone } from '../lib/statusTone';
-import { formatDateTime, formatNumber, formatSignedNumber, type IsoDateLike } from '../lib/format';
+import { formatDateTime, formatNumber, formatSignedNumber, shortId, type IsoDateLike } from '../lib/format';
 import type {
   AdminUser,
   UserAccessProfilePatch,
@@ -91,7 +91,7 @@ export function UserDetailModal({ uid, open, onClose }: UserDetailModalProps) {
       open={open}
       onClose={onClose}
       size="xl"
-      title={user ? user.displayName ?? user.email ?? uid : '유저 상세'}
+      title={user ? user.displayName ?? user.email ?? shortId(uid) : '유저 상세'}
       headerRight={
         user && (
           <StatusBadge label={USER_STATUS_LABELS[user.status]} tone={userStatusTone(user.status)} />
@@ -251,7 +251,7 @@ function InfoTab({ user, onClose }: { user: AdminUser; onClose: () => void }) {
       {/* 기본 정보(읽기 전용) */}
       <div className="rounded-lg border border-zinc-700/60 bg-zinc-800/40 p-4 grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
         <Info label="UID">
-          <CopyableId value={user.uid} full />
+          <CopyableId value={user.uid} full sensitive />
         </Info>
         <Info label="이메일">{user.email ?? '–'}</Info>
         <Info label="닉네임">{user.displayName ?? '–'}</Info>

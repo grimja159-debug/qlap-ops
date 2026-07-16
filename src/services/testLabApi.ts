@@ -25,8 +25,9 @@ import type {
  * scenario/cleanup)은 QLapServices 백엔드에 구현되어 실제로 호출한다. 이들은 백엔드에서
  * super_admin 전용(SUPER_ADMIN_REQUIRED)이며 모든 변경은 testLabAuditLogs 에 기록된다.
  *
- * 시즌 빠른 도구(상태 변경/복제/랭킹 재계산)는 test-lab 모듈 밖(시즌 라우트)을 손대야 하므로
- * 이번 범위에서 제외했고 'planned' 로 남겨 화면에서 비활성 + 필요 API 안내로 표시한다.
+ * 시즌 상태 변경은 시즌 관리 페이지의 PATCH /api/admin/seasons/:id 를 사용한다.
+ * 랭킹 재계산은 QLapGuild API의 rebuild-snapshot 엔드포인트에 연결했다.
+ * 시즌 복제만 아직 별도 정책이 필요해 'planned' 로 남긴다.
  */
 export const TEST_LAB_ENDPOINTS: TestLabEndpointSpec[] = [
   {
@@ -87,10 +88,10 @@ export const TEST_LAB_ENDPOINTS: TestLabEndpointSpec[] = [
   },
   {
     key: 'season-status',
-    method: 'POST',
-    path: '/api/admin/seasons/:id/status',
-    note: '(미구현) 테스트 진행을 위해 시즌 상태를 빠르게 변경합니다. 시즌 라우트 변경 필요(이번 범위 밖).',
-    state: 'planned',
+    method: 'PATCH',
+    path: '/api/admin/seasons/:id',
+    note: '시즌 상태 변경은 시즌 관리 페이지에서 부분 수정 API로 처리합니다.',
+    state: 'implemented',
   },
   {
     key: 'season-clone',
@@ -102,9 +103,9 @@ export const TEST_LAB_ENDPOINTS: TestLabEndpointSpec[] = [
   {
     key: 'season-recalculate-rankings',
     method: 'POST',
-    path: '/api/admin/seasons/:id/recalculate-rankings',
-    note: '(미구현) 전체 길드 점수 변경 후 currentSeasonRank 를 재계산합니다. 시즌 라우트 변경 필요(이번 범위 밖).',
-    state: 'planned',
+    path: '/api/admin/seasons/:id/rankings/rebuild-snapshot',
+    note: 'QLapGuild API의 랭킹 스냅샷 재생성 경로에 연결됩니다. 기본은 dry-run 미리보기입니다.',
+    state: 'implemented',
   },
 ];
 
